@@ -29,17 +29,6 @@ func newConn() (*net.UDPConn, error) {
 	return conn, nil
 }
 
-func main() {
-	conn, err := newConn()
-	if err != nil {
-		os.Exit(1)
-	}
-	defer conn.Close()
-	for {
-		handleClient(conn)
-	}
-}
-
 func handleClient(conn *net.UDPConn) {
 	data := make([]byte, 1024)
 	n, remoteAddr, err := conn.ReadFromUDP(data)
@@ -49,4 +38,15 @@ func handleClient(conn *net.UDPConn) {
 	}
 	log.Println(n, remoteAddr, string(data))
 	conn.WriteToUDP([]byte("ok"), remoteAddr)
+}
+
+func main() {
+	conn, err := newConn()
+	if err != nil {
+		os.Exit(1)
+	}
+	defer conn.Close()
+	for {
+		handleClient(conn)
+	}
 }
