@@ -1,28 +1,33 @@
 package main
 
 import (
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	"time"
 )
 
-var host = flag.String("host", "localhost", "host")
-var port = flag.String("port", "5061", "port")
-
-func main() {
+func newConn() (*net.UDPConn, error) {
+	host := flag.String("host", "localhost", "host")
+	port := flag.String("port", "5061", "port")
 	flag.Parse()
 	addr, err := net.ResolveUDPAddr("udp", *host+":"+*port)
 	if err != nil {
 		log.Println("Can't resolve address: ", err)
-		os.Exit(1)
+		return nil, err
 	}
 	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		fmt.Println("Error listening:", err)
+		return nil, err
+	}
+	return conn, nil
+}
+
+func main() {
+	conn, err := newConn()
+	if err != nil {
 		os.Exit(1)
 	}
 	defer conn.Close()
@@ -38,10 +43,6 @@ func handleClient(conn *net.UDPConn) {
 		fmt.Println("failed to read UDP msg because of ", err.Error())
 		return
 	}
-	daytime := time.Now().Unix()
-	fmt.Println(n, remoteAddr)
-	fmt.Println(string(data))
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, uint32(daytime))
-	conn.WriteToUDP(b, remoteAddr)
+	fmt.Println(n, remoteAddr, string(data))
+	conn.WriteToUDP([]byte("ok"), remoteAddr)
 }
