@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"time"
@@ -16,7 +17,7 @@ func main() {
 	flag.Parse()
 	addr, err := net.ResolveUDPAddr("udp", *host+":"+*port)
 	if err != nil {
-		fmt.Println("Can't resolve address: ", err)
+		log.Println("Can't resolve address: ", err)
 		os.Exit(1)
 	}
 	conn, err := net.ListenUDP("udp", addr)
