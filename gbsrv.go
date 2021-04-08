@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 	"os"
+
+	"github.com/jart/gosip/sip"
 )
 
 func parseConsole() (host, port string) {
@@ -31,12 +33,18 @@ func newConn() (*net.UDPConn, error) {
 
 func handleClient(conn *net.UDPConn) {
 	data := make([]byte, 1024)
-	n, remoteAddr, err := conn.ReadFromUDP(data)
+	_, remoteAddr, err := conn.ReadFromUDP(data)
 	if err != nil {
 		log.Println("failed to read UDP msg because of ", err.Error())
 		return
 	}
-	log.Println(n, remoteAddr, string(data))
+	log.Println(remoteAddr, string(data))
+	msg, err := sip.ParseMsg(data)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println(msg)
 	conn.WriteToUDP([]byte("ok"), remoteAddr)
 }
 
