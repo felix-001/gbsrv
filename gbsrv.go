@@ -11,15 +11,16 @@ import (
 )
 
 func parseConsole() (host, port string) {
-	host = *flag.String("host", "localhost", "host")
-	port = *flag.String("port", "5061", "port")
+    _host := flag.String("host", "localhost", "host")
+	_port := flag.String("port", "5061", "port")
 	flag.Parse()
-	return
+	return *_host, *_port
 }
 
 func newConn() (*net.UDPConn, error) {
 	host, port := parseConsole()
 	addr, err := net.ResolveUDPAddr("udp", host+":"+port)
+	log.Println("listen on", host, ":", port)
 	if err != nil {
 		log.Println("Can't resolve address: ", err)
 		return nil, err
@@ -45,48 +46,62 @@ func send200(msg *sip.Msg, conn *net.UDPConn, remoteAddr *net.UDPAddr) {
 		VersionMinor: 0,
 		Status:       200,
 		Phrase:       "OK",
+		From:         msg.From,
+		To:           msg.To,
+		CallID:       msg.CallID,
+		CSeq:         msg.CSeq,
+        CSeqMethod:   "REGISTER",
+        UserAgent:    "QVS",
+        Expires:      3600,
 		Via: &sip.Via{
 			Host: msg.Via.Host,
 			Port: msg.Via.Port,
 			Param: &sip.Param{
-				Name:  "rport",
-				Value: strconv.Itoa(int(msg.Via.Port)),
+				Name:  "branch",
+				Value: branch,
 				Next: &sip.Param{
 					Name:  "received",
 					Value: msg.Via.Host,
 					Next: &sip.Param{
-						Name:  "branch",
-						Value: branch,
+						Name:  "rport",
+						Value: strconv.Itoa(int(msg.Via.Port)),
 					},
 				},
 			},
 		},
 	}
-	log.Println("message is " + resp.String())
+	log.Println("send response\n" + resp.String())
 	conn.WriteToUDP([]byte(resp.String()), remoteAddr)
 }
 
+var count = 0
+
 func handleClient(conn *net.UDPConn) {
 	data := make([]byte, 1024)
-	_, remoteAddr, err := conn.ReadFromUDP(data)
+	n, remoteAddr, err := conn.ReadFromUDP(data)
 	if err != nil {
 		log.Println("failed to read UDP msg because of ", err.Error())
 		return
 	}
 	log.Println(remoteAddr, string(data))
-	msg, err := sip.ParseMsg(data)
+    msg, err := sip.ParseMsg(data[0:n])
 	if err != nil {
 		log.Println(err)
-		//return
+		return
 	}
 	log.Println(msg)
-	//if msg.Method == "Register" {
-	send200(msg, conn, remoteAddr)
-	return
-	//}
+	if msg.Method == "REGISTER" {
+		send200(msg, conn, remoteAddr)
+		return
+	}
+    if msg.Method == "MESSAGE" {
+        log.Println("got MESSAGE count:", count)
+        count++
+    }
 }
 
 func main() {
+	log.SetFlags(log.Lshortfile)
 	conn, err := newConn()
 	if err != nil {
 		os.Exit(1)
