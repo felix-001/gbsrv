@@ -275,12 +275,16 @@ func (self *SipManager) waitRtpOverUdp() {
 
 func (self *SipManager) inviteAudio() {
 	msg := self.newSipReqMsg("INVITE")
+	msg.From.Uri.User = "31011500002000000001"
+	msg.Request.User = "34020000001370000001"
+	msg.To.Uri.User = "34020000001370000001"
 	payload := &sip.MiscPayload{
 		T: "APPLICATION/SDP",
 		D: self.genSdp(),
 	}
 	msg.Payload = payload
 	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
+	log.Println(msg.String())
 	go self.waitRtpOverUdp()
 }
 
@@ -360,7 +364,7 @@ func (self *SipManager) newSipMsg(method string) *sip.Msg {
 	self.to.Param = nil
 	msg := &sip.Msg{
 		Method:      method,
-		Request:     self.to.Uri,
+		Request:     from.Uri,
 		From:        from,
 		To:          self.to,
 		Via:         self.genVia(),
