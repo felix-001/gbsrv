@@ -246,7 +246,7 @@ func (self *SipManager) genSdp() []byte {
 		"m=audio 9001 RTP/AVP 8\r\n" +
 		"a=sendrecv\r\n" +
 		"a=rtpmap:8 PCMA/8000\r\n" +
-		"y=0002407430\r\n" +
+		"y=0200000001\r\n" +
 		"f=v/////a/1/8/1\r\n"
 
 	return []byte(sdp)
@@ -277,7 +277,10 @@ func (self *SipManager) inviteAudio() {
 	msg := self.newSipReqMsg("INVITE")
 	msg.From.Uri.User = "31011500002000000001"
 	msg.Request.User = "34020000001370000001"
+	msg.Request.Host = "192.168.1.2"
+	msg.Request.Port = 5060
 	msg.To.Uri.User = "34020000001370000001"
+	msg.Subject = "34020000001370000001:0200000001,31011500002000000001:0"
 	payload := &sip.MiscPayload{
 		T: "APPLICATION/SDP",
 		D: self.genSdp(),
@@ -348,7 +351,7 @@ func (self *SipManager) genVia() *sip.Via {
 func (self *SipManager) newFrom() *sip.Addr {
 	port, _ := strconv.Atoi(self.port)
 	uri := &sip.URI{
-		User: self.srvSipId,
+		User: "31011500002000000001",
 		Host: self.host,
 		Port: uint16(port),
 	}
@@ -362,9 +365,10 @@ func (self *SipManager) newFrom() *sip.Addr {
 func (self *SipManager) newSipMsg(method string) *sip.Msg {
 	from := self.newFrom()
 	self.to.Param = nil
+	request := *from.Uri
 	msg := &sip.Msg{
 		Method:      method,
-		Request:     from.Uri,
+		Request:     &request,
 		From:        from,
 		To:          self.to,
 		Via:         self.genVia(),
