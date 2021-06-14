@@ -34,6 +34,7 @@ type SipManager struct {
 	port          string
 	catalogCallid string
 	to            *sip.Addr
+	srvSipId      string
 }
 
 type Item struct {
@@ -97,6 +98,7 @@ func (self *SipManager) gen200Via(msg *sip.Msg) *sip.Via {
 			branch = param.Value
 		}
 	}
+	//log.Println(msg.Via.Port)
 	via := &sip.Via{
 		Host: msg.Via.Host,
 		Port: msg.Via.Port,
@@ -118,18 +120,16 @@ func (self *SipManager) gen200Via(msg *sip.Msg) *sip.Via {
 
 func (self *SipManager) send200(msg *sip.Msg) {
 	resp := &sip.Msg{
-		VersionMajor: 2,
-		VersionMinor: 0,
-		Status:       200,
-		Phrase:       "OK",
-		From:         msg.From,
-		To:           msg.To,
-		CallID:       msg.CallID,
-		CSeq:         msg.CSeq,
-		CSeqMethod:   msg.Method,
-		UserAgent:    "QVS",
-		Expires:      3600,
-		Via:          self.gen200Via(msg),
+		Status:     200,
+		Phrase:     "OK",
+		From:       msg.From,
+		To:         msg.To,
+		CallID:     msg.CallID,
+		CSeq:       msg.CSeq,
+		CSeqMethod: msg.Method,
+		UserAgent:  "QVS",
+		Expires:    3600,
+		Via:        self.gen200Via(msg),
 	}
 	//log.Println("send response\n" + resp.String())
 	self.conn.WriteToUDP([]byte(resp.String()), self.remoteAddr)
@@ -177,7 +177,6 @@ func (self *SipManager) fetchMsg() (*sip.Msg, error) {
 	}
 	self.lastMsg = msg
 	self.to = msg.From
-	self.to.Param = nil
 	return msg, nil
 }
 
@@ -188,6 +187,7 @@ func (self *SipManager) handleClient() {
 	}
 	if msg.Method == "REGISTER" {
 		self.gbid = msg.From.Uri.User
+		self.srvSipId = msg.Request.User
 		log.Println(self.gbid, "Register")
 		self.send200(msg)
 		return
@@ -205,6 +205,7 @@ func (self *SipManager) handleClient() {
 		} else {
 			log.Println(msg)
 		}
+		self.sendAck()
 
 		return
 	}
@@ -235,7 +236,29 @@ func (self *SipManager) handleHelp(strs []string) {
 	sip-raw <raw-sip-file>`)
 }
 
+func (self *SipManager) genSdp() []byte {
+	sdp := "v=0\r\n" +
+		"o=" + self.srvSipId + " 0 0 IN IP4 " + self.host + "\r\n" +
+		"s=Talk\r\n" +
+		"c=IN IP4 " + self.host + "\r\n" +
+		"t=0 0\r\n" +
+		"m=audio 9001 RTP/AVP 8\r\n" +
+		"a=sendrecv\r\n" +
+		"a=rtpmap:8 PCMA/8000\r\n" +
+		"y=0002407430\r\n" +
+		"f=v/////a/1/8/1\r\n"
+
+	return []byte(sdp)
+}
+
 func (self *SipManager) inviteAudio() {
+	msg := self.newSipReqMsg("INVITE")
+	payload := &sip.MiscPayload{
+		T: "APPLICATION/SDP",
+		D: self.genSdp(),
+	}
+	msg.Payload = payload
+	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
 }
 
 func (self *SipManager) inviteVideo() {
@@ -251,17 +274,11 @@ func (self *SipManager) handleInvite(strs []string) {
 }
 
 func (self *SipManager) sendAck() {
-	from := self.lastMsg.To
-	from.Tag()
-	to := self.lastMsg.From
-	to.Param = nil
-	msg := &sip.Msg{
-		Method:  "ACK",
-		Request: self.lastMsg.From.Uri,
-		Via:     self.genVia(),
-		From:    from,
-		To:      to,
-	}
+	msg := self.newSipMsg("ACK")
+	msg.CallID = self.lastMsg.CallID
+	msg.CSeq = self.lastMsg.CSeq
+	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
+	log.Println("send:", msg.String())
 }
 
 func (self *SipManager) genCatalogPayload(gbid string) *sip.MiscPayload {
@@ -304,7 +321,7 @@ func (self *SipManager) genVia() *sip.Via {
 func (self *SipManager) newFrom() *sip.Addr {
 	port, _ := strconv.Atoi(self.port)
 	uri := &sip.URI{
-		User: self.gbid,
+		User: self.srvSipId,
 		Host: self.host,
 		Port: uint16(port),
 	}
@@ -317,8 +334,10 @@ func (self *SipManager) newFrom() *sip.Addr {
 
 func (self *SipManager) newSipMsg(method string) *sip.Msg {
 	from := self.newFrom()
+	self.to.Param = nil
 	msg := &sip.Msg{
 		Method:      method,
+		Request:     self.to.Uri,
 		From:        from,
 		To:          self.to,
 		Via:         self.genVia(),
@@ -330,28 +349,18 @@ func (self *SipManager) newSipMsg(method string) *sip.Msg {
 	return msg
 }
 
+func (self *SipManager) newSipReqMsg(method string) *sip.Msg {
+	msg := self.newSipMsg(method)
+	msg.CallID = util.GenerateCallID()
+	msg.CSeq = self.cseq
+	return msg
+}
+
 func (self *SipManager) handleCatalog(strs []string) {
-	from := self.lastMsg.To
-	from.Tag()
-	to := self.lastMsg.From
-	to.Param = nil
-	callid := util.GenerateCallID()
-	self.catalogCallid = callid
-	catalog := &sip.Msg{
-		Method:      "MESSAGE",
-		Request:     self.lastMsg.From.Uri,
-		From:        from,
-		To:          to,
-		CallID:      callid,
-		CSeq:        self.cseq,
-		CSeqMethod:  "MESSAGE",
-		MaxForwards: 70,
-		UserAgent:   "QVS",
-		Payload:     self.genCatalogPayload(self.gbid),
-		Via:         self.genVia(),
-	}
-	self.conn.WriteToUDP([]byte(catalog.String()), self.remoteAddr)
-	self.cseq++
+	msg := self.newSipReqMsg("MESSAGE")
+	msg.Payload = self.genCatalogPayload(self.gbid)
+	self.catalogCallid = msg.CallID
+	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
 	//log.Println("send:", catalog.String())
 }
 
@@ -395,6 +404,8 @@ func NewSipManager(conn *net.UDPConn, host, port string) *SipManager {
 	return manager
 }
 
+// TODO
+// ack request/from/to 分别都是哪个id
 func main() {
 	log.SetFlags(log.Lshortfile)
 	host, port := parseConsole()
