@@ -233,6 +233,7 @@ func (self *SipManager) handleHelp(strs []string) {
 	help 
 	last: repeat last command
 	catalog: send catalog req
+	intite <audio/video>
 	sip-raw <raw-sip-file>`)
 }
 
@@ -300,7 +301,7 @@ func (self *SipManager) sendAck() {
 	msg.CallID = self.lastMsg.CallID
 	msg.CSeq = self.lastMsg.CSeq
 	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
-	log.Println("send:", msg.String())
+	//log.Println("send:", msg.String())
 }
 
 func (self *SipManager) genCatalogPayload(gbid string) *sip.MiscPayload {
