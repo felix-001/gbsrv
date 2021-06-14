@@ -251,6 +251,27 @@ func (self *SipManager) genSdp() []byte {
 	return []byte(sdp)
 }
 
+func (self *SipManager) waitRtpOverUdp() {
+	addr, err := net.ResolveUDPAddr("udp", self.host+":9001")
+	log.Println("listen on", self.host, ":9001")
+	if err != nil {
+		log.Println("Can't resolve address: ", err)
+		return
+	}
+	conn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		log.Println("Error listening:", err)
+		return
+	}
+	data := make([]byte, 2048)
+	_, remoteAddr, err := conn.ReadFromUDP(data)
+	if err != nil {
+		log.Println("failed to read UDP msg because of ", err.Error())
+		return
+	}
+	log.Println(remoteAddr, string(data))
+}
+
 func (self *SipManager) inviteAudio() {
 	msg := self.newSipReqMsg("INVITE")
 	payload := &sip.MiscPayload{
@@ -259,6 +280,7 @@ func (self *SipManager) inviteAudio() {
 	}
 	msg.Payload = payload
 	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
+	go self.waitRtpOverUdp()
 }
 
 func (self *SipManager) inviteVideo() {
