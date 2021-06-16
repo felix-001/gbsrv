@@ -205,7 +205,7 @@ func (self *SipManager) handleClient() {
 			msg.CallID == self.catalogCallid {
 			log.Println("Catalog response", msg.Status)
 		} else {
-			log.Println(self.rawMsg)
+			//log.Println(self.rawMsg)
 		}
 		if msg.CSeqMethod == "INVITE" {
 			self.sendAck()
@@ -280,7 +280,7 @@ func (self *SipManager) waitRtpOverUdp() {
 func (self *SipManager) inviteAudio() {
 	msg := self.newSipReqMsg("INVITE")
 	msg.From.Uri.User = "31011500002000000001"
-	msg.From.Uri.Host = "3101150000"
+	//msg.From.Uri.Host = "3101150000"
 	msg.From.Uri.Port = 0
 	msg.From.Param = &sip.Param{"tag", "539541459", nil}
 	msg.Request.User = "34020000001370000001"
@@ -289,7 +289,6 @@ func (self *SipManager) inviteAudio() {
 	msg.To.Uri.User = "34020000001370000001"
 	msg.CSeq = 2
 	msg.CallID = "264541356"
-	msg.UserAgent = "QVS"
 	payload := &sip.MiscPayload{
 		T: "APPLICATION/SDP",
 		D: self.genSdp(),
