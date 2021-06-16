@@ -280,9 +280,8 @@ func (self *SipManager) waitRtpOverUdp() {
 func (self *SipManager) inviteAudio() {
 	msg := self.newSipReqMsg("INVITE")
 	msg.From.Uri.User = "31011500002000000001"
-	//msg.From.Uri.Host = "3101150000"
 	msg.From.Uri.Port = 0
-	msg.From.Param = &sip.Param{"tag", "539541459", nil}
+	//msg.From.Param = &sip.Param{"tag", "539541459", nil}
 	msg.Request.User = "34020000001370000001"
 	msg.Request.Host = "100.100.72.253"
 	msg.Request.Port = 5060
