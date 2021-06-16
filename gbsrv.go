@@ -250,8 +250,8 @@ func (self *SipManager) genSdp() []byte {
 		"m=audio 9001 RTP/AVP 8\r\n" +
 		"a=sendrecv\r\n" +
 		"a=rtpmap:8 PCMA/8000\r\n" +
-		"y=0200000001\r\n" +
-		"f=v/////a/1/8/1\r\n"
+		"y=0200000001\r\n" // +
+		//"f=v/////a/1/8/1\r\n"
 
 	return []byte(sdp)
 }
