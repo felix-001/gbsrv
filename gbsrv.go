@@ -35,6 +35,7 @@ type SipManager struct {
 	catalogCallid string
 	to            *sip.Addr
 	srvSipId      string
+	rawMsg        string
 }
 
 type Item struct {
@@ -143,7 +144,7 @@ func (self *SipManager) handleMessage(msg *sip.Msg) {
 		if err != nil {
 			return
 		}
-		log.Println(xmlMsg.CmdType)
+		//log.Println(xmlMsg.CmdType)
 		if xmlMsg.CmdType == "Catalog" {
 			item := xmlMsg.DeviceList.Items[0]
 			log.Println("Name:", item.Name)
@@ -170,6 +171,7 @@ func (self *SipManager) fetchMsg() (*sip.Msg, error) {
 	}
 	//log.Println(remoteAddr, string(data))
 	self.remoteAddr = remoteAddr
+	self.rawMsg = string(data[0:n])
 	msg, err := sip.ParseMsg(data[0:n])
 	if err != nil {
 		log.Println(err)
@@ -203,9 +205,11 @@ func (self *SipManager) handleClient() {
 			msg.CallID == self.catalogCallid {
 			log.Println("Catalog response", msg.Status)
 		} else {
-			log.Println(msg)
+			log.Println(self.rawMsg)
 		}
-		self.sendAck()
+		if msg.CSeqMethod == "INVITE" {
+			self.sendAck()
+		}
 
 		return
 	}
@@ -243,7 +247,7 @@ func (self *SipManager) genSdp() []byte {
 		"s=Talk\r\n" +
 		"c=IN IP4 " + self.host + "\r\n" +
 		"t=0 0\r\n" +
-		"m=audio 9001 RTP/AVP 8\r\n" +
+		"m=audio 30026 RTP/AVP 8\r\n" +
 		"a=sendrecv\r\n" +
 		"a=rtpmap:8 PCMA/8000\r\n" +
 		"y=0200000001\r\n" +
@@ -276,11 +280,24 @@ func (self *SipManager) waitRtpOverUdp() {
 func (self *SipManager) inviteAudio() {
 	msg := self.newSipReqMsg("INVITE")
 	msg.From.Uri.User = "31011500002000000001"
+	msg.From.Uri.Host = "3101150000"
+	msg.From.Uri.Port = 0
+	msg.From.Param = &sip.Param{"tag", "539541459", nil}
 	msg.Request.User = "34020000001370000001"
-	msg.Request.Host = "192.168.1.2"
+	msg.Request.Host = "100.100.72.253"
 	msg.Request.Port = 5060
 	msg.To.Uri.User = "34020000001370000001"
 	msg.Subject = "34020000001370000001:0200000001,31011500002000000001:0"
+	msg.CSeq = 2
+	msg.CallID = "264541356"
+	msg.UserAgent = "LiveGBS v210604"
+	msg.Contact = &sip.Addr{
+		Uri: &sip.URI{
+			User: "31011500002000000001",
+			Host: "100.100.5.205",
+			Port: 5061,
+		},
+	}
 	payload := &sip.MiscPayload{
 		T: "APPLICATION/SDP",
 		D: self.genSdp(),
@@ -304,7 +321,7 @@ func (self *SipManager) handleInvite(strs []string) {
 }
 
 func (self *SipManager) sendAck() {
-	msg := self.newSipMsg("ACK")
+	msg := self.newSipAckMsg("ACK")
 	msg.CallID = self.lastMsg.CallID
 	msg.CSeq = self.lastMsg.CSeq
 	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
@@ -341,10 +358,14 @@ func (self *SipManager) genVia() *sip.Via {
 		Host: self.host,
 		Port: uint16(port),
 		Param: &sip.Param{
-			Name: "rport",
+			Name:  "branch",
+			Value: "z9hG4bK180541459",
+			Next: &sip.Param{
+				Name: "rport",
+			},
 		},
 	}
-	via.Branch()
+	//via.Branch()
 	return via
 }
 
@@ -352,6 +373,20 @@ func (self *SipManager) newFrom() *sip.Addr {
 	port, _ := strconv.Atoi(self.port)
 	uri := &sip.URI{
 		User: "31011500002000000001",
+		Host: self.host,
+		Port: uint16(port),
+	}
+	from := &sip.Addr{
+		Uri: uri,
+	}
+	from.Tag()
+	return from
+}
+
+func (self *SipManager) newAckFrom() *sip.Addr {
+	port, _ := strconv.Atoi(self.port)
+	uri := &sip.URI{
+		User: self.srvSipId,
 		Host: self.host,
 		Port: uint16(port),
 	}
@@ -373,6 +408,25 @@ func (self *SipManager) newSipMsg(method string) *sip.Msg {
 		To:          self.to,
 		Via:         self.genVia(),
 		CSeqMethod:  method,
+		MaxForwards: 70,
+		UserAgent:   "QVS",
+	}
+	self.cseq++
+	return msg
+}
+
+func (self *SipManager) newSipAckMsg(method string) *sip.Msg {
+	contact := &sip.Addr{
+		Uri: self.lastMsg.From.Uri,
+	}
+	msg := &sip.Msg{
+		Method:      method,
+		Request:     self.lastMsg.To.Uri,
+		From:        self.lastMsg.From,
+		To:          self.lastMsg.To,
+		Via:         self.genVia(),
+		CSeqMethod:  method,
+		Contact:     contact,
 		MaxForwards: 70,
 		UserAgent:   "QVS",
 	}
