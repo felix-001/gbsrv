@@ -247,7 +247,7 @@ func (self *SipManager) genSdp() []byte {
 		"s=Talk\r\n" +
 		"c=IN IP4 " + self.host + "\r\n" +
 		"t=0 0\r\n" +
-		"m=audio 30026 RTP/AVP 8\r\n" +
+		"m=audio 9001 RTP/AVP 8\r\n" +
 		"a=sendrecv\r\n" +
 		"a=rtpmap:8 PCMA/8000\r\n" +
 		"y=0200000001\r\n" +
@@ -274,7 +274,7 @@ func (self *SipManager) waitRtpOverUdp() {
 		log.Println("failed to read UDP msg because of ", err.Error())
 		return
 	}
-	log.Println(remoteAddr, string(data))
+	log.Println("got rtp data:", remoteAddr, data[:64])
 }
 
 func (self *SipManager) inviteAudio() {
