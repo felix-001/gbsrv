@@ -291,13 +291,15 @@ func (self *SipManager) inviteAudio() {
 	msg.CSeq = 2
 	msg.CallID = "264541356"
 	msg.UserAgent = "LiveGBS v210604"
-	msg.Contact = &sip.Addr{
-		Uri: &sip.URI{
-			User: "31011500002000000001",
-			Host: "100.100.5.205",
-			Port: 5061,
-		},
-	}
+	/*
+		msg.Contact = &sip.Addr{
+			Uri: &sip.URI{
+				User: "31011500002000000001",
+				Host: "100.100.5.205",
+				Port: 5061,
+			},
+		}
+	*/
 	payload := &sip.MiscPayload{
 		T: "APPLICATION/SDP",
 		D: self.genSdp(),
