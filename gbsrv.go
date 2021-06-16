@@ -287,7 +287,7 @@ func (self *SipManager) inviteAudio() {
 	msg.Request.Host = "100.100.72.253"
 	msg.Request.Port = 5060
 	msg.To.Uri.User = "34020000001370000001"
-	msg.Subject = "34020000001370000001:0200000001,31011500002000000001:0"
+	//msg.Subject = "34020000001370000001:0200000001,31011500002000000001:0"
 	msg.CSeq = 2
 	msg.CallID = "264541356"
 	msg.UserAgent = "LiveGBS v210604"
