@@ -237,7 +237,7 @@ func (self *SipManager) handleHelp(strs []string) {
 	help 
 	last: repeat last command
 	catalog: send catalog req
-	intite <audio/video>
+	invite <audio/video>
 	sip-raw <raw-sip-file>`)
 }
 
