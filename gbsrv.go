@@ -67,7 +67,7 @@ func parseConsole() (host, port string) {
 
 func newConn(host, port string) (*net.UDPConn, error) {
 	addr, err := net.ResolveUDPAddr("udp", host+":"+port)
-	log.Println("listen on", host, ":", port)
+	fmt.Println("listen on udp", host, ":", port)
 	if err != nil {
 		log.Println("Can't resolve address: ", err)
 		return nil, err
@@ -234,7 +234,7 @@ func (self *SipManager) handleSipRaw(strs []string) {
 
 func (self *SipManager) handleHelp(strs []string) {
 	fmt.Println(`support cmds: 
-	help 
+	help: this help
 	last: repeat last command
 	catalog: send catalog req
 	invite <audio/video>
@@ -459,9 +459,13 @@ func (self *SipManager) handleConsole() {
 			self.cmds[cmdstr](strs)
 			self.lastcmd = line
 		} else {
-			fmt.Printf("err: unsupported cmd:%s", strs[0])
+			fmt.Printf("err: unsupported cmd: %s", strs[0])
 		}
 	}
+}
+
+func (self *SipManager) quit(strs []string) {
+	os.Exit(0)
 }
 
 func NewSipManager(conn *net.UDPConn, host, port string) *SipManager {
@@ -471,6 +475,9 @@ func NewSipManager(conn *net.UDPConn, host, port string) *SipManager {
 		"help":    manager.handleHelp,
 		"invite":  manager.handleInvite,
 		"catalog": manager.handleCatalog,
+		"q":       manager.quit,
+		"quit":    manager.quit,
+		"exit":    manager.quit,
 	}
 	return manager
 }
