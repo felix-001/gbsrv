@@ -517,6 +517,8 @@ func NewSipManager(conn *net.UDPConn, host, port string, verbose bool) *SipManag
 
 // TODO
 // ack request/from/to 分别都是哪个id
+// 1. sip raw msg写文件
+// 2. gui， 播放视频流
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	host, port, verbose := parseConsole()
