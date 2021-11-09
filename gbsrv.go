@@ -174,7 +174,7 @@ func (self *SipManager) fetchMsg() (*sip.Msg, error) {
 	self.rawMsg = string(data[0:n])
 	msg, err := sip.ParseMsg(data[0:n])
 	if err != nil {
-		log.Println(err)
+		log.Println(err, "n:", n, "raw:", string(data))
 		return nil, err
 	}
 	self.lastMsg = msg
