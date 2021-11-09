@@ -238,6 +238,7 @@ func (self *SipManager) handleHelp(strs []string) {
 	last: repeat last command
 	catalog: send catalog req
 	invite <audio/video>
+	q/quit/exit: exit
 	sip-raw <raw-sip-file>`)
 }
 
