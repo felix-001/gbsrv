@@ -6,3 +6,4 @@ simple gb srv
 - 发送invite
 - 发送sip raw data
 - 收到register回复200 ok
+- 收到keepalive、alarm、catalog回复200 ok
