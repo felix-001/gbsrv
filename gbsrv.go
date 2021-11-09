@@ -37,6 +37,7 @@ type SipManager struct {
 	srvSipId      string
 	rawMsg        string
 	verbose       bool
+	dumpMsg       bool
 }
 
 type Item struct {
@@ -178,7 +179,9 @@ func (self *SipManager) fetchMsg() (*sip.Msg, error) {
 		log.Println("failed to read UDP msg because of ", err.Error())
 		return nil, err
 	}
-	//log.Println(remoteAddr, string(data))
+	if self.dumpMsg && n > 4 {
+		log.Println(remoteAddr, n, string(data))
+	}
 	self.remoteAddr = remoteAddr
 	self.rawMsg = string(data[0:n])
 	msg, err := sip.ParseMsg(data[0:n])
@@ -203,7 +206,7 @@ func (self *SipManager) handleClient() {
 	if msg.Method == "REGISTER" {
 		self.gbid = msg.From.Uri.User
 		self.srvSipId = msg.Request.User
-		log.Println(self.gbid, "Register")
+		log.Println(self.gbid, "Register", "Expires:", msg.Expires)
 		self.send200(msg)
 		return
 	}
@@ -250,6 +253,7 @@ func (self *SipManager) handleHelp(strs []string) {
 	h/help: this help
 	last: repeat last command
 	catalog: send catalog req
+	dump-msg: dump sip message
 	invite <audio/video>
 	q/quit/exit: exit
 	sip-raw <raw-sip-file>`)
@@ -447,10 +451,14 @@ func (self *SipManager) newSipReqMsg(method string) *sip.Msg {
 
 func (self *SipManager) handleCatalog(strs []string) {
 	msg := self.newSipReqMsg("MESSAGE")
+	if self.gbid == "" {
+		log.Println("no gbid, not register yet")
+		return
+	}
 	msg.Payload = self.genCatalogPayload(self.gbid)
 	self.catalogCallid = msg.CallID
 	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
-	log.Println("send:", msg.String())
+	//log.Println("send:", msg.String())
 }
 
 func (self *SipManager) handleConsole() {
@@ -486,16 +494,23 @@ func (self *SipManager) quit(strs []string) {
 	os.Exit(0)
 }
 
+func (self *SipManager) setDumpMsg(strs []string) {
+	log.Println("dump sip raw message on")
+	self.dumpMsg = true
+}
+
 func NewSipManager(conn *net.UDPConn, host, port string, verbose bool) *SipManager {
 	manager := &SipManager{conn: conn, host: host, port: port, verbose: verbose}
 	manager.cmds = map[string]handler{
-		"sip-raw": manager.handleSipRaw,
-		"help":    manager.handleHelp,
-		"invite":  manager.handleInvite,
-		"catalog": manager.handleCatalog,
-		"q":       manager.quit,
-		"quit":    manager.quit,
-		"exit":    manager.quit,
+		"sip-raw":  manager.handleSipRaw,
+		"help":     manager.handleHelp,
+		"h":        manager.handleHelp,
+		"invite":   manager.handleInvite,
+		"catalog":  manager.handleCatalog,
+		"q":        manager.quit,
+		"quit":     manager.quit,
+		"exit":     manager.quit,
+		"dump-msg": manager.setDumpMsg,
 	}
 	return manager
 }
