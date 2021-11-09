@@ -473,6 +473,7 @@ func (self *SipManager) handleConsole() {
 		if len(line) == 1 {
 			continue
 		}
+		line = strings.TrimSpace(line)
 		if line[:len(line)-1] == "last" {
 			line = self.lastcmd
 		}
