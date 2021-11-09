@@ -36,6 +36,7 @@ type SipManager struct {
 	to            *sip.Addr
 	srvSipId      string
 	rawMsg        string
+	verbose       bool
 }
 
 type Item struct {
@@ -58,11 +59,12 @@ type XmlMsg struct {
 	DeviceList DeviceList `xml:"DeviceList,omitempty"`
 }
 
-func parseConsole() (host, port string) {
+func parseConsole() (string, string, bool) {
 	_host := flag.String("host", "localhost", "host")
 	_port := flag.String("port", "5061", "port")
+	_verbose := flag.Bool("show-detail", true, "verbose")
 	flag.Parse()
-	return *_host, *_port
+	return *_host, *_port, *_verbose
 }
 
 func newConn(host, port string) (*net.UDPConn, error) {
@@ -146,17 +148,24 @@ func (self *SipManager) handleMessage(msg *sip.Msg) {
 		}
 		//log.Println(xmlMsg.CmdType)
 		if xmlMsg.CmdType == "Catalog" {
-			item := xmlMsg.DeviceList.Items[0]
-			log.Println("Name:", item.Name)
-			log.Println("Chid:", item.ChId)
-			log.Println("Model:", item.Model)
-			log.Println("Manufacturer:", item.Manufacturer)
-			self.chid = item.ChId
+			if len(xmlMsg.DeviceList.Items) > 0 {
+				item := xmlMsg.DeviceList.Items[0]
+				log.Println("Name:", item.Name)
+				log.Println("Chid:", item.ChId)
+				log.Println("Model:", item.Model)
+				log.Println("Manufacturer:", item.Manufacturer)
+				self.chid = item.ChId
+			} else {
+				log.Println("raw msg:", msg.String())
+			}
 		}
 		if xmlMsg.CmdType != "Alarm" &&
 			xmlMsg.CmdType != "Keepalive" &&
 			xmlMsg.CmdType != "Catalog" {
 			log.Println(self.remoteAddr, msg.String())
+		}
+		if self.verbose {
+			log.Println(xmlMsg.DeviceId, xmlMsg.CmdType)
 		}
 	}
 	self.send200(msg)
@@ -174,7 +183,11 @@ func (self *SipManager) fetchMsg() (*sip.Msg, error) {
 	self.rawMsg = string(data[0:n])
 	msg, err := sip.ParseMsg(data[0:n])
 	if err != nil {
-		log.Println(err, "n:", n, "raw:", string(data))
+		if n > 4 {
+			log.Println(err, "n:", n, "raw:", string(data))
+		} else {
+			//log.Println("recevied only", n, "bytes, hik ipc sometimes sent `\\r\\n`")
+		}
 		return nil, err
 	}
 	self.lastMsg = msg
@@ -386,6 +399,10 @@ func (self *SipManager) newAckFrom() *sip.Addr {
 
 func (self *SipManager) newSipMsg(method string) *sip.Msg {
 	from := self.newFrom()
+	if self.to == nil {
+		log.Println("self.to is nil")
+		return nil
+	}
 	self.to.Param = nil
 	request := *from.Uri
 	msg := &sip.Msg{
@@ -433,7 +450,7 @@ func (self *SipManager) handleCatalog(strs []string) {
 	msg.Payload = self.genCatalogPayload(self.gbid)
 	self.catalogCallid = msg.CallID
 	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
-	//log.Println("send:", catalog.String())
+	log.Println("send:", msg.String())
 }
 
 func (self *SipManager) handleConsole() {
@@ -469,8 +486,8 @@ func (self *SipManager) quit(strs []string) {
 	os.Exit(0)
 }
 
-func NewSipManager(conn *net.UDPConn, host, port string) *SipManager {
-	manager := &SipManager{conn: conn, host: host, port: port}
+func NewSipManager(conn *net.UDPConn, host, port string, verbose bool) *SipManager {
+	manager := &SipManager{conn: conn, host: host, port: port, verbose: verbose}
 	manager.cmds = map[string]handler{
 		"sip-raw": manager.handleSipRaw,
 		"help":    manager.handleHelp,
@@ -486,13 +503,13 @@ func NewSipManager(conn *net.UDPConn, host, port string) *SipManager {
 // TODO
 // ack request/from/to 分别都是哪个id
 func main() {
-	log.SetFlags(log.Lshortfile)
-	host, port := parseConsole()
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	host, port, verbose := parseConsole()
 	conn, err := newConn(host, port)
 	if err != nil {
 		os.Exit(1)
 	}
-	manager := NewSipManager(conn, host, port)
+	manager := NewSipManager(conn, host, port, verbose)
 	defer conn.Close()
 	go manager.handleConsole()
 	for {
