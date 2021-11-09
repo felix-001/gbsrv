@@ -234,7 +234,7 @@ func (self *SipManager) handleSipRaw(strs []string) {
 
 func (self *SipManager) handleHelp(strs []string) {
 	fmt.Println(`support cmds: 
-	help: this help
+	h/help: this help
 	last: repeat last command
 	catalog: send catalog req
 	invite <audio/video>
