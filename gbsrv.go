@@ -479,14 +479,17 @@ func (self *SipManager) handleConsole() {
 		}
 		strs := strings.Split(line, " ")
 		cmdstr := strs[0]
-		if len(strs) == 1 {
-			cmdstr = strs[0][:len(strs[0])-1]
-		}
+		/*
+			slen := len(strs[0])
+			if len(strs) == 1 {
+				cmdstr = strs[0][:slen-1]
+			}
+		*/
 		if _, ok := self.cmds[cmdstr]; ok {
 			self.cmds[cmdstr](strs)
 			self.lastcmd = line
 		} else {
-			fmt.Printf("err: unsupported cmd: %s", strs[0])
+			fmt.Println("err: unsupported cmd: \n", strs[0], []byte(line))
 		}
 	}
 }
