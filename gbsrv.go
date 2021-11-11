@@ -135,7 +135,9 @@ func (self *SipManager) send200(msg *sip.Msg) {
 		Expires:    3600,
 		Via:        self.gen200Via(msg),
 	}
-	//log.Println("send response\n" + resp.String())
+	if self.dumpMsg {
+		log.Println("send response\n" + resp.String())
+	}
 	self.conn.WriteToUDP([]byte(resp.String()), self.remoteAddr)
 }
 
@@ -329,7 +331,9 @@ func (self *SipManager) sendAck() {
 	msg.CallID = self.lastMsg.CallID
 	msg.CSeq = self.lastMsg.CSeq
 	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
-	//log.Println("send:", msg.String())
+	if self.dumpMsg {
+		log.Println("send:", msg.String())
+	}
 }
 
 func (self *SipManager) genCatalogPayload(gbid string) *sip.MiscPayload {
@@ -458,7 +462,9 @@ func (self *SipManager) handleCatalog(strs []string) {
 	msg.Payload = self.genCatalogPayload(self.gbid)
 	self.catalogCallid = msg.CallID
 	self.conn.WriteToUDP([]byte(msg.String()), self.remoteAddr)
-	//log.Println("send:", msg.String())
+	if self.dumpMsg {
+		log.Println("send:", msg.String())
+	}
 }
 
 func (self *SipManager) handleConsole() {
@@ -470,26 +476,26 @@ func (self *SipManager) handleConsole() {
 			fmt.Println(err)
 			continue
 		}
-		if len(line) == 1 {
+		if line == "\n" || line == "\r\n" {
 			continue
 		}
+		//log.Println(len(line), []byte(line))
 		line = strings.TrimSpace(line)
 		if line[:len(line)-1] == "last" {
 			line = self.lastcmd
 		}
 		strs := strings.Split(line, " ")
+		if len(strs) == 0 {
+			log.Println("split err")
+			continue
+		}
 		cmdstr := strs[0]
-		/*
-			slen := len(strs[0])
-			if len(strs) == 1 {
-				cmdstr = strs[0][:slen-1]
-			}
-		*/
 		if _, ok := self.cmds[cmdstr]; ok {
 			self.cmds[cmdstr](strs)
 			self.lastcmd = line
 		} else {
-			fmt.Println("err: unsupported cmd: \n", strs[0], []byte(line))
+			fmt.Println("err: unsupported cmd: ", strs[0])
+			self.handleHelp(nil)
 		}
 	}
 }
