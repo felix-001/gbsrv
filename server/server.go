@@ -168,9 +168,9 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 		log.Println("收到对端的Catalog信令")
 		s.handleCatalog(xmlMsg)
 	case "Keepalive":
-		log.Println("收到对端的心跳信令")
+		log.Println("收到对端的心跳信令, 设备国标ID:", msg.From.Uri.User)
 	case "Alarm":
-		log.Println("收到对端的告警信令")
+		log.Println("收到对端的告警信令, 设备国标ID:", msg.From.Uri.User)
 	}
 	return s.sendResp(msg)
 }
