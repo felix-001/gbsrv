@@ -42,6 +42,7 @@ func (s *Server) fetchMsg() (*sip.Msg, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println("n:", n)
 	s.remoteAddr = remoteAddr
 	msg, err := sip.ParseMsg(data[0:n])
 	return msg, err
@@ -193,7 +194,7 @@ func (s *Server) Run() {
 	for {
 		msg, err := s.fetchMsg()
 		if err != nil {
-			log.Fatal("fetch msg err:", err)
+			log.Fatal("fetch msg err:", err, msg.String())
 		}
 		if err := s.handleMsg(msg); err != nil {
 			log.Fatal("hand msg err:", err)
