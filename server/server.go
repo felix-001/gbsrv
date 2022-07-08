@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"log"
 	"net"
 	"strconv"
@@ -12,6 +13,10 @@ import (
 )
 
 // TODO 超时3分钟收不到任何信令报错，退出
+
+var (
+	errInvalidMsg = errors.New("invalid msg")
+)
 
 type Server struct {
 	port       string
@@ -44,7 +49,7 @@ func (s *Server) fetchMsg() (*sip.Msg, error) {
 	}
 	if n == 4 {
 		// 海康的设备有的时候发送4个字节的无用数据过来("\r\n")
-		return nil, nil
+		return nil, errInvalidMsg
 	}
 	s.remoteAddr = remoteAddr
 	msg, err := sip.ParseMsg(data[0:n])
@@ -197,6 +202,9 @@ func (s *Server) Run() {
 	for {
 		msg, err := s.fetchMsg()
 		if err != nil {
+			if err == errInvalidMsg {
+				continue
+			}
 			log.Fatal("fetch msg err:", err, msg.String())
 		}
 		if err := s.handleMsg(msg); err != nil {
