@@ -42,7 +42,10 @@ func (s *Server) fetchMsg() (*sip.Msg, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println("n:", n)
+	if n == 4 {
+		// 海康的设备有的时候发送4个字节的无用数据过来("\r\n")
+		return nil, nil
+	}
 	s.remoteAddr = remoteAddr
 	msg, err := sip.ParseMsg(data[0:n])
 	return msg, err
