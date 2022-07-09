@@ -259,6 +259,8 @@ func (s *Server) sendCatalogReq(remoteSipAddr *sip.Addr) {
 	log.Println("[S->C] 向摄像机发送CATALOG请求")
 	msg := s.newSipMsg("MESSAGE", util.GenerateCallID(), s.cseq, remoteSipAddr)
 	msg.Payload = s.newCatalogPayload(remoteSipAddr.Uri.User)
+	log.Println("发送的原始CATALOG消息:")
+	log.Println(msg.String())
 	if _, err := s.conn.WriteToUDP([]byte(msg.String()), s.remoteAddr); err != nil {
 		log.Fatal("send catalog err", err)
 	}
