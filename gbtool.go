@@ -13,7 +13,8 @@ const (
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	mode := flag.String("mode", "srv", "运行模式(srv: 国标服务器模式 cli: 国标客户端)")
+	mode := flag.String("mode", "srv", "运行模式,srv: 国标服务器 cli: 国标客户端")
+	flag.Parse()
 	if *mode == "srv" {
 		srv := server.New(SipSrvPort)
 		srv.Run()

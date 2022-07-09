@@ -108,7 +108,11 @@ func (s *Server) sendResp(msg *sip.Msg) error {
 }
 
 func (s *Server) handleRegister(msg *sip.Msg) error {
-	log.Println("收到摄像机的注册信令, 设备国标ID:", msg.From.Uri.User)
+	if msg.Expires == 0 {
+		log.Println("收到摄像机的注销信令, 设备国标ID:", msg.From.Uri.User)
+	} else {
+		log.Println("收到摄像机的注册信令, 设备国标ID:", msg.From.Uri.User)
+	}
 	return s.sendResp(msg)
 }
 
