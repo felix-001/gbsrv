@@ -27,10 +27,11 @@ type Server struct {
 	showRemoteAddr bool
 	srvGbId        string
 	host           string
+	branch         string
 }
 
-func New(port string, srvGbId string) *Server {
-	return &Server{port: port, showRemoteAddr: true, srvGbId: srvGbId}
+func New(port, srvGbId, branch string) *Server {
+	return &Server{port: port, showRemoteAddr: true, srvGbId: srvGbId, branch: branch}
 }
 
 func (s *Server) newConn() error {
@@ -86,7 +87,7 @@ func (s *Server) newVia() *sip.Via {
 		Port: uint16(port),
 		Param: &sip.Param{
 			Name:  "branch",
-			Value: "z9hG4bK180541459",
+			Value: s.branch,
 			Next: &sip.Param{
 				Name: "rport",
 			},
