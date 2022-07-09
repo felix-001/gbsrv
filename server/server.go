@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/jart/gosip/sip"
+	"github.com/jart/gosip/util"
 	"golang.org/x/net/html/charset"
 )
 
@@ -28,10 +29,18 @@ type Server struct {
 	srvGbId        string
 	host           string
 	branch         string
+	catalogCallid  string
+	cseq           int
 }
 
 func New(port, srvGbId, branch string) *Server {
-	return &Server{port: port, showRemoteAddr: true, srvGbId: srvGbId, branch: branch}
+	return &Server{
+		port:           port,
+		showRemoteAddr: true,
+		srvGbId:        srvGbId,
+		branch:         branch,
+		cseq:           0,
+	}
 }
 
 func (s *Server) newConn() error {
@@ -170,7 +179,6 @@ func (s *Server) sendResp(msg *sip.Msg) error {
 		Expires:    3600,
 		Via:        s.new200Via(msg),
 	}
-	//log.Println("send response\n" + resp.String())
 	if _, err := s.conn.WriteToUDP([]byte(resp.String()), s.remoteAddr); err != nil {
 		return err
 	}
@@ -228,6 +236,29 @@ func (s Server) handleCatalog(xml *XmlMsg) {
 	log.Println("Manufacturer:", item.Manufacturer)
 }
 
+func (s *Server) newCatalogPayload(gbid string) *sip.MiscPayload {
+	xml := `<?xml version="1.0" encoding="GB2312"?>\r\n
+		<Query>\r\n
+		<CmdType>Catalog</CmdType>\r\n
+		<SN>419315752</SN>\r\n
+		<DeviceID>`
+	xml += gbid + "</DeviceID>\r\n</Query>\r\n"
+	payload := &sip.MiscPayload{}
+	payload.D = []byte(xml)
+	payload.T = "Application/MANSCDP+xml"
+
+	return payload
+}
+
+func (s *Server) sendCatalogReq(remoteSipAddr *sip.Addr) {
+	msg := s.newSipMsg("MESSAGE", util.GenerateCallID(), s.cseq, remoteSipAddr)
+	msg.Payload = s.newCatalogPayload(remoteSipAddr.Uri.User)
+	if _, err := s.conn.WriteToUDP([]byte(msg.String()), s.remoteAddr); err != nil {
+		log.Fatal("send catalog err", err)
+	}
+	s.catalogCallid = msg.CallID
+}
+
 func (s *Server) handleSipMessage(msg *sip.Msg) error {
 	if msg.Payload.ContentType() != "Application/MANSCDP+xml" {
 		log.Println("收到消息格式为非xml,暂不处理")
@@ -242,6 +273,7 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到Catalog信令")
 		s.handleCatalog(xmlMsg)
 	case "Keepalive":
+		go s.sendCatalogReq(msg.From)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳告警")
