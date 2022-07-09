@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -139,7 +140,7 @@ func (s *Server) handleRemoteResp(msg *sip.Msg) error {
 	log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "Catalog响应:", msg.Status)
 	if msg.Status != 200 {
 		log.Println("raw msg:")
-		log.Println(msg.String())
+		fmt.Println(msg.String())
 	}
 	return s.sendAck(msg)
 }
@@ -260,7 +261,7 @@ func (s *Server) sendCatalogReq(remoteSipAddr *sip.Addr) {
 	msg := s.newSipMsg("MESSAGE", util.GenerateCallID(), s.cseq, remoteSipAddr)
 	msg.Payload = s.newCatalogPayload(remoteSipAddr.Uri.User)
 	log.Println("发送的原始CATALOG消息:")
-	log.Println(msg.String())
+	fmt.Println(msg.String())
 	if _, err := s.conn.WriteToUDP([]byte(msg.String()), s.remoteAddr); err != nil {
 		log.Fatal("send catalog err", err)
 	}
