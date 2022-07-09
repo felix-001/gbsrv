@@ -207,7 +207,7 @@ func (s *Server) Run() {
 	if err := s.newConn(); err != nil {
 		log.Fatal("new conn err:", err)
 	}
-	log.Printf("listen on 0.0.0.0:%s\n", s.port)
+	log.Printf("国标服务监听地址 0.0.0.0:%s\n", s.port)
 	for {
 		msg, err := s.fetchMsg()
 		if err != nil {
