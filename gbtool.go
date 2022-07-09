@@ -12,7 +12,7 @@ const (
 )
 
 func main() {
-	log.SetFlags(log.Lshortfile)
+	log.SetFlags(log.Ltime)
 	mode := flag.String("mode", "srv", "运行模式,srv: 国标服务器 cli: 国标客户端")
 	flag.Parse()
 	if *mode == "srv" {
