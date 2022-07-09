@@ -114,9 +114,9 @@ func (s *Server) sendResp(msg *sip.Msg) error {
 
 func (s *Server) handleRegister(msg *sip.Msg) error {
 	if msg.Expires == 0 {
-		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到注销信令")
+		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注销信令")
 	} else {
-		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到注册信令")
+		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注册信令")
 	}
 	return s.sendResp(msg)
 }
@@ -174,12 +174,12 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 	}
 	switch xmlMsg.CmdType {
 	case "Catalog":
-		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到Catalog信令")
+		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到Catalog信令")
 		s.handleCatalog(xmlMsg)
 	case "Keepalive":
-		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
+		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
-		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到心跳告警")
+		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳告警")
 	}
 	return s.sendResp(msg)
 }
