@@ -13,6 +13,8 @@ import (
 )
 
 // TODO 超时3分钟收不到任何信令报错，退出
+// TODO 双击即运行
+// TODO 保存日志文件
 
 var (
 	errInvalidMsg = errors.New("invalid msg")
@@ -23,10 +25,12 @@ type Server struct {
 	conn           *net.UDPConn
 	remoteAddr     *net.UDPAddr
 	showRemoteAddr bool
+	srvGbId        string
+	host           string
 }
 
-func New(port string) *Server {
-	return &Server{port: port, showRemoteAddr: true}
+func New(port string, srvGbId string) *Server {
+	return &Server{port: port, showRemoteAddr: true, srvGbId: srvGbId}
 }
 
 func (s *Server) newConn() error {
@@ -61,11 +65,71 @@ func (s *Server) fetchMsg() (*sip.Msg, error) {
 	return msg, err
 }
 
-func (s *Server) handleRemoteResp(msg *sip.Msg) {
-
+func (s *Server) newFrom() *sip.Addr {
+	port, _ := strconv.Atoi(s.port)
+	uri := &sip.URI{
+		User: s.srvGbId,
+		Host: s.host,
+		Port: uint16(port),
+	}
+	from := &sip.Addr{
+		Uri: uri,
+	}
+	from.Tag()
+	return from
 }
 
-func (s *Server) newVia(msg *sip.Msg) *sip.Via {
+func (s *Server) newVia() *sip.Via {
+	port, _ := strconv.Atoi(s.port)
+	via := &sip.Via{
+		Host: s.host,
+		Port: uint16(port),
+		Param: &sip.Param{
+			Name:  "branch",
+			Value: "z9hG4bK180541459",
+			Next: &sip.Param{
+				Name: "rport",
+			},
+		},
+	}
+	return via
+}
+
+func (s *Server) newSipMsg(method string, callId string, cseq int, to *sip.Addr) *sip.Msg {
+	from := s.newFrom()
+	request := *from.Uri
+	msg := &sip.Msg{
+		Method:      method,
+		Request:     &request,
+		From:        from,
+		To:          to,
+		Via:         s.newVia(),
+		CSeqMethod:  method,
+		MaxForwards: 70,
+		UserAgent:   "QVS",
+		CallID:      callId,
+		CSeq:        cseq,
+	}
+	return msg
+}
+
+func (s *Server) sendAck(msg *sip.Msg) error {
+	newMsg := s.newSipMsg("ACK", msg.CallID, msg.CSeq, msg.From)
+	if _, err := s.conn.WriteToUDP([]byte(newMsg.String()), s.remoteAddr); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) handleRemoteResp(msg *sip.Msg) error {
+	if msg.CSeqMethod != "MESSAGE" {
+		log.Println("未处理的响应方法:", msg.CSeqMethod)
+	}
+	log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "Catalog响应:", msg.Status)
+	return s.sendAck(msg)
+}
+
+func (s *Server) new200Via(msg *sip.Msg) *sip.Via {
 	branch := ""
 	if msg != nil && msg.Via != nil && msg.Via.Param != nil {
 		param := msg.Via.Param.Get("branch")
@@ -103,7 +167,7 @@ func (s *Server) sendResp(msg *sip.Msg) error {
 		CSeqMethod: msg.Method,
 		UserAgent:  "QVS",
 		Expires:    3600,
-		Via:        s.newVia(msg),
+		Via:        s.new200Via(msg),
 	}
 	//log.Println("send response\n" + resp.String())
 	if _, err := s.conn.WriteToUDP([]byte(resp.String()), s.remoteAddr); err != nil {
@@ -186,28 +250,40 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 
 func (s *Server) handleMsg(msg *sip.Msg) error {
 	if msg.IsResponse() {
-		s.handleRemoteResp(msg)
+		return s.handleRemoteResp(msg)
 	}
 	switch msg.Method {
 	case "REGISTER":
-		if err := s.handleRegister(msg); err != nil {
-			return err
-		}
+		return s.handleRegister(msg)
 	case "MESSAGE":
-		if err := s.handleSipMessage(msg); err != nil {
-			return err
-		}
+		return s.handleSipMessage(msg)
 	default:
 		log.Println("未处理的方法:", msg.Method)
 	}
 	return nil
 }
 
+func getOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
+}
+
 func (s *Server) Run() {
 	if err := s.newConn(); err != nil {
 		log.Fatal("new conn err:", err)
 	}
+	s.host = getOutboundIP().String()
 	log.Printf("国标服务监听地址 0.0.0.0:%s\n", s.port)
+	log.Println("SIP服务国标ID:", s.srvGbId)
+	log.Println("本机IP地址:", s.host)
+
 	for {
 		msg, err := s.fetchMsg()
 		if err != nil {
