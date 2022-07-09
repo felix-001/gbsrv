@@ -16,9 +16,6 @@ import (
 	"golang.org/x/net/html/charset"
 )
 
-// TODO 双击即运行
-// TODO 保存日志文件
-
 var (
 	errInvalidMsg = errors.New("invalid msg")
 )
@@ -356,6 +353,7 @@ func (s *Server) Run() {
 		log.Fatal("new conn err:", err)
 	}
 	s.host = getOutboundIP().String()
+	log.Println("请按照以下参数配置摄像机:")
 	log.Println("SIP服务器编号:", s.srvGbId)
 	log.Println("SIP服务器IP:", s.host)
 	log.Println("SIP服务器端口:", s.port)
@@ -366,7 +364,7 @@ func (s *Server) Run() {
 		log.Println("摄像机是否注册:", s.isRegistered)
 		log.Println("摄像机是否在线:", s.isOnline)
 		log.Println("Catalog是否响应:", s.isCatalogResp)
-		log.Println("timer arrive, quit")
+		log.Println("到达超时时间，程序退出")
 		os.Exit(0)
 	}()
 	for {
