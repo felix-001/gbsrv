@@ -16,7 +16,6 @@ import (
 	"golang.org/x/net/html/charset"
 )
 
-// TODO 超时3分钟收不到任何信令报错，退出
 // TODO 双击即运行
 // TODO 保存日志文件
 
@@ -39,6 +38,7 @@ type Server struct {
 	isRegistered   bool
 	isOnline       bool
 	isCatalogResp  bool
+	keeyAliveCnt   int
 }
 
 func New(port, srvGbId, branch string) *Server {
@@ -308,6 +308,14 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 			s.showUA = false
 		}
 		s.isOnline = true
+		s.keeyAliveCnt++
+		if s.keeyAliveCnt == 3 {
+			log.Println("摄像机是否注册:", s.isRegistered)
+			log.Println("摄像机是否在线:", s.isOnline)
+			log.Println("Catalog是否响应:", s.isCatalogResp)
+			log.Println("收到了三次KeepAlive信令,摄像机信令验证正常,程序退出")
+			os.Exit(0)
+		}
 		go s.sendCatalogReq(msg.From)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
