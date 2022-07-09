@@ -19,13 +19,14 @@ var (
 )
 
 type Server struct {
-	port       string
-	conn       *net.UDPConn
-	remoteAddr *net.UDPAddr
+	port           string
+	conn           *net.UDPConn
+	remoteAddr     *net.UDPAddr
+	showRemoteAddr bool
 }
 
 func New(port string) *Server {
-	return &Server{port: port}
+	return &Server{port: port, showRemoteAddr: true}
 }
 
 func (s *Server) newConn() error {
@@ -50,6 +51,10 @@ func (s *Server) fetchMsg() (*sip.Msg, error) {
 	if n == 4 {
 		// 海康的设备有的时候发送4个字节的无用数据过来("\r\n")
 		return nil, errInvalidMsg
+	}
+	if s.showRemoteAddr {
+		log.Println("摄像机地址:", remoteAddr)
+		s.showRemoteAddr = false
 	}
 	s.remoteAddr = remoteAddr
 	msg, err := sip.ParseMsg(data[0:n])
@@ -109,9 +114,9 @@ func (s *Server) sendResp(msg *sip.Msg) error {
 
 func (s *Server) handleRegister(msg *sip.Msg) error {
 	if msg.Expires == 0 {
-		log.Println("收到摄像机的注销信令, 设备国标ID:", msg.From.Uri.User)
+		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到注销信令")
 	} else {
-		log.Println("收到摄像机的注册信令, 设备国标ID:", msg.From.Uri.User)
+		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到注册信令")
 	}
 	return s.sendResp(msg)
 }
