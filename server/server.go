@@ -128,6 +128,7 @@ func (s *Server) sendAck(msg *sip.Msg) error {
 	if _, err := s.conn.WriteToUDP([]byte(newMsg.String()), s.remoteAddr); err != nil {
 		return err
 	}
+	s.cseq++
 	return nil
 }
 
