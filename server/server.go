@@ -244,11 +244,11 @@ func (s Server) handleCatalog(xml *XmlMsg) {
 
 func (s *Server) newCatalogPayload(gbid string) *sip.MiscPayload {
 	xml := `<?xml version="1.0" encoding="GB2312"?>\r\n
-		<Query>\r\n
-		<CmdType>Catalog</CmdType>\r\n
-		<SN>419315752</SN>\r\n
-		<DeviceID>`
-	xml += gbid + "</DeviceID>\r\n</Query>\r\n"
+<Query>\r\n
+<CmdType>Catalog</CmdType>\r\n
+<SN>419315752</SN>\r\n
+<DeviceID>`
+	xml += gbid + "</DeviceID>\\r\\n</Query>\\r\\n"
 	payload := &sip.MiscPayload{}
 	payload.D = []byte(xml)
 	payload.T = "Application/MANSCDP+xml"
