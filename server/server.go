@@ -32,6 +32,7 @@ type Server struct {
 	branch         string
 	catalogCallid  string
 	cseq           int
+	catalogResp200 bool
 }
 
 func New(port, srvGbId, branch string) *Server {
@@ -41,6 +42,7 @@ func New(port, srvGbId, branch string) *Server {
 		srvGbId:        srvGbId,
 		branch:         branch,
 		cseq:           0,
+		catalogResp200: true,
 	}
 }
 
@@ -141,6 +143,7 @@ func (s *Server) handleRemoteResp(msg *sip.Msg) error {
 	if msg.Status != 200 {
 		log.Println("raw msg:")
 		fmt.Println(msg.String())
+		s.catalogResp200 = false
 	}
 	return s.sendAck(msg)
 }
@@ -260,8 +263,10 @@ func (s *Server) sendCatalogReq(remoteSipAddr *sip.Addr) {
 	log.Println("[S->C] 向摄像机发送CATALOG请求")
 	msg := s.newSipMsg("MESSAGE", util.GenerateCallID(), s.cseq, remoteSipAddr)
 	msg.Payload = s.newCatalogPayload(remoteSipAddr.Uri.User)
-	log.Println("发送的原始CATALOG消息:")
-	fmt.Println(msg.String())
+	if !s.catalogResp200 {
+		log.Println("发送的原始CATALOG消息:")
+		fmt.Println(msg.String())
+	}
 	if _, err := s.conn.WriteToUDP([]byte(msg.String()), s.remoteAddr); err != nil {
 		log.Fatal("send catalog err", err)
 	}
