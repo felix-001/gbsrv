@@ -174,12 +174,12 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 	}
 	switch xmlMsg.CmdType {
 	case "Catalog":
-		log.Println("收到对端的Catalog信令")
+		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到Catalog信令")
 		s.handleCatalog(xmlMsg)
 	case "Keepalive":
-		log.Println("收到对端的心跳信令, 设备国标ID:", msg.From.Uri.User)
+		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
-		log.Println("收到对端的告警信令, 设备国标ID:", msg.From.Uri.User)
+		log.Println("摄像机国标ID:", msg.From.Uri.User, "收到心跳告警")
 	}
 	return s.sendResp(msg)
 }
