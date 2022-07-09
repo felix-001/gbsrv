@@ -201,6 +201,10 @@ func (s *Server) handleRegister(msg *sip.Msg) error {
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注销信令")
 	} else {
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注册信令")
+		if s.showUA {
+			log.Println("摄像机User-Agent:", msg.UserAgent)
+			s.showUA = false
+		}
 	}
 	return s.sendResp(msg)
 }
