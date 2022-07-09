@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strconv"
+	"time"
 
 	"github.com/jart/gosip/sip"
 	"github.com/jart/gosip/util"
@@ -34,6 +36,9 @@ type Server struct {
 	cseq           int
 	catalogResp200 bool
 	showUA         bool
+	isRegistered   bool
+	isOnline       bool
+	isCatalogResp  bool
 }
 
 func New(port, srvGbId, branch string) *Server {
@@ -45,6 +50,9 @@ func New(port, srvGbId, branch string) *Server {
 		cseq:           0,
 		catalogResp200: true,
 		showUA:         true,
+		isRegistered:   false,
+		isOnline:       false,
+		isCatalogResp:  false,
 	}
 }
 
@@ -205,6 +213,7 @@ func (s *Server) handleRegister(msg *sip.Msg) error {
 			log.Println("摄像机User-Agent:", msg.UserAgent)
 			s.showUA = false
 		}
+		s.isRegistered = true
 	}
 	return s.sendResp(msg)
 }
@@ -239,7 +248,7 @@ func (s *Server) parseXml(raw string) (*XmlMsg, error) {
 	return xmlMsg, nil
 }
 
-func (s Server) handleCatalog(xml *XmlMsg) {
+func (s *Server) handleCatalog(xml *XmlMsg) {
 	if len(xml.DeviceList.Items) == 0 {
 		log.Println("对端响应的CATALOG设备个数为0")
 		return
@@ -249,6 +258,7 @@ func (s Server) handleCatalog(xml *XmlMsg) {
 	log.Println("Chid:", item.ChId)
 	log.Println("Model:", item.Model)
 	log.Println("Manufacturer:", item.Manufacturer)
+	s.isCatalogResp = true
 }
 
 func (s *Server) newCatalogPayload(gbid string) *sip.MiscPayload {
@@ -297,6 +307,7 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 			log.Println("摄像机User-Agent:", msg.UserAgent)
 			s.showUA = false
 		}
+		s.isOnline = true
 		go s.sendCatalogReq(msg.From)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
@@ -337,10 +348,19 @@ func (s *Server) Run() {
 		log.Fatal("new conn err:", err)
 	}
 	s.host = getOutboundIP().String()
-	log.Printf("国标服务监听地址 0.0.0.0:%s\n", s.port)
-	log.Println("SIP服务国标ID:", s.srvGbId)
-	log.Println("本机IP地址:", s.host)
+	log.Println("SIP服务器编号:", s.srvGbId)
+	log.Println("SIP服务器IP:", s.host)
+	log.Println("SIP服务器端口:", s.port)
 
+	t := time.NewTimer(2 * time.Minute)
+	go func() {
+		<-t.C
+		log.Println("摄像机是否注册:", s.isRegistered)
+		log.Println("摄像机是否在线:", s.isOnline)
+		log.Println("Catalog是否响应:", s.isCatalogResp)
+		log.Println("timer arrive, quit")
+		os.Exit(0)
+	}()
 	for {
 		msg, err := s.fetchMsg()
 		if err != nil {
