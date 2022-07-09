@@ -33,6 +33,7 @@ type Server struct {
 	catalogCallid  string
 	cseq           int
 	catalogResp200 bool
+	showUA         bool
 }
 
 func New(port, srvGbId, branch string) *Server {
@@ -43,6 +44,7 @@ func New(port, srvGbId, branch string) *Server {
 		branch:         branch,
 		cseq:           0,
 		catalogResp200: true,
+		showUA:         true,
 	}
 }
 
@@ -287,6 +289,10 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到Catalog信令")
 		s.handleCatalog(xmlMsg)
 	case "Keepalive":
+		if s.showUA {
+			log.Println("摄像机User-Agent:", msg.UserAgent)
+			s.showUA = false
+		}
 		go s.sendCatalogReq(msg.From)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
