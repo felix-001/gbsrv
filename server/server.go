@@ -137,6 +137,9 @@ func (s *Server) handleRemoteResp(msg *sip.Msg) error {
 		log.Println("未处理的响应方法:", msg.CSeqMethod)
 	}
 	log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "Catalog响应:", msg.Status)
+	if msg.Status != 200 {
+		log.Println("raw msg:", msg.String())
+	}
 	return s.sendAck(msg)
 }
 
