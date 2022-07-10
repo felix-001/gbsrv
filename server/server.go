@@ -368,7 +368,7 @@ func (s *Server) Run() {
 		log.Println("摄像机是否在线:", s.isOnline)
 		log.Println("Catalog是否响应:", s.isCatalogResp)
 		log.Println("到达超时时间，程序退出")
-		os.Exit(0)
+		//os.Exit(0)
 	}()
 	for {
 		msg, err := s.fetchMsg()

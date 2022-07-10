@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gbsrv/server"
 	"log"
 
 	"github.com/asticode/go-astikit"
@@ -13,7 +14,7 @@ const (
 	SipSrvPort = "5061"
 	SrvGbId    = "31011500002000000001"
 	branch     = "z9hG4bK180541459"
-	htmlAbout  = `国标调试工具.http://www.qiniu.com`
+	htmlAbout  = `国标调试工具.<br>https://www.qiniu.com`
 )
 
 var (
@@ -22,6 +23,7 @@ var (
 	VersionAstilectron string
 	VersionElectron    string
 	w                  *astilectron.Window
+	srv                *server.Server
 )
 
 func handleMessages(_ *astilectron.Window, m bootstrap.MessageIn) (payload interface{}, err error) {
@@ -34,6 +36,18 @@ func showMenu(e astilectron.Event) (deleteListener bool) {
 		log.Println(fmt.Errorf("sending about event failed: %w", err))
 	}
 	return
+}
+
+func onWait(_ *astilectron.Astilectron, ws []*astilectron.Window, _ *astilectron.Menu, _ *astilectron.Tray, _ *astilectron.Menu) error {
+	w = ws[0]
+	data := "<div>国标服务器编码: " + SrvGbId + "</div>"
+	data += "<div>国标服务器IP: " + srv.GetHost() + "</div>"
+	data += "<div>国标服务器端口: " + SipSrvPort + "</div>"
+	err := bootstrap.SendMessage(w, "msg", data, func(m *bootstrap.MessageIn) {})
+	if err != nil {
+		log.Println(fmt.Errorf("sending about event failed: %w", err))
+	}
+	return nil
 }
 
 func main() {
@@ -60,24 +74,23 @@ func main() {
 		Label: astikit.StrPtr("File"),
 		SubMenu: []*astilectron.MenuItemOptions{
 			{
-				Label:   astikit.StrPtr("About"),
+				Label:   astikit.StrPtr("关于"),
 				OnClick: showMenu,
 			},
 			{Role: astilectron.MenuItemRoleClose},
 		},
 	}
+	srv = server.New(SipSrvPort, SrvGbId, branch)
+	go srv.Run()
 	err := bootstrap.Run(bootstrap.Options{
 		Asset:              Asset,
 		AssetDir:           AssetDir,
 		AstilectronOptions: options,
-		Debug:              false,
+		Debug:              true,
 		MenuOptions:        []*astilectron.MenuItemOptions{menuOptions},
-		OnWait: func(_ *astilectron.Astilectron, ws []*astilectron.Window, _ *astilectron.Menu, _ *astilectron.Tray, _ *astilectron.Menu) error {
-			w = ws[0]
-			return nil
-		},
-		RestoreAssets: RestoreAssets,
-		Windows:       []*bootstrap.Window{win},
+		OnWait:             onWait,
+		RestoreAssets:      RestoreAssets,
+		Windows:            []*bootstrap.Window{win},
 	})
 
 	if err != nil {
