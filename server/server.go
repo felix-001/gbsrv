@@ -50,6 +50,7 @@ func New(port, srvGbId, branch string) *Server {
 		isRegistered:   false,
 		isOnline:       false,
 		isCatalogResp:  false,
+		host:           getOutboundIP().String(),
 	}
 }
 
@@ -348,16 +349,18 @@ func getOutboundIP() net.IP {
 	return localAddr.IP
 }
 
+func (s *Server) GetHost() string {
+	return s.host
+}
+
+func (s *Server) GetPort() string {
+	return s.port
+}
+
 func (s *Server) Run() {
 	if err := s.newConn(); err != nil {
 		log.Fatal("new conn err:", err)
 	}
-	s.host = getOutboundIP().String()
-	log.Println("请按照以下参数配置摄像机:")
-	log.Println("SIP服务器编号:", s.srvGbId)
-	log.Println("SIP服务器IP:", s.host)
-	log.Println("SIP服务器端口:", s.port)
-
 	t := time.NewTimer(2 * time.Minute)
 	go func() {
 		<-t.C

@@ -1,5 +1,7 @@
 github.com/jart/gosip v0.0.0-20200629215808-4e7924e19438 h1:99EsI92lz0oKm+8rThiPJaxACTQgbQFSwN+WHEQF2PM=
 github.com/jart/gosip v0.0.0-20200629215808-4e7924e19438/go.mod h1:pLqHw0l24s7B/i+bBauWzg3oF8z+78wfh/8MnRce81Q=
+github.com/webview/webview v0.0.0-20220708123937-d7bd55814dbd h1:aWEgxNdbRbQVt5bYFaRYxz629POvossM6CIbwyAWjpQ=
+github.com/webview/webview v0.0.0-20220708123937-d7bd55814dbd/go.mod h1:rpXAuuHgyEJb6kXcXldlkOjU6y4x+YcASKKXJNUhh0Y=
 golang.org/x/net v0.0.0-20210610132358-84b48f89b13b h1:k+E048sYJHyVnsr1GDrRZWQ32D2C7lWs9JRc0bel53A=
 golang.org/x/net v0.0.0-20210610132358-84b48f89b13b/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
