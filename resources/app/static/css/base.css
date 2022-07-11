@@ -3,21 +3,18 @@
 }
 
 html, body {
-    background-color: #fff;
-    color: #333;
+    background-color: #333;
+    color: #fff;
     height: 100%;
     margin: 0;
     width: 100%;
+    text-indent: 2em;
 }
 
-.main {
+.main .keepalive .unregister .register .catalog .devGbId{
     background-color: #333;
     color: #fff;
-    /*float: left;*/
-    height: 100%;
     overflow: auto;
-    /*padding: 15px;*/
-    /*width: 40%;*/
 }
 
 .title {

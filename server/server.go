@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"strconv"
-	"time"
 
 	"github.com/jart/gosip/sip"
 	"github.com/jart/gosip/util"
@@ -19,6 +17,9 @@ import (
 var (
 	errInvalidMsg = errors.New("invalid msg")
 )
+
+type callBack func(count int)
+type catalogCallBack func(count int, name, chid, model, manufacturer string)
 
 type Server struct {
 	port           string
@@ -35,10 +36,18 @@ type Server struct {
 	isRegistered   bool
 	isOnline       bool
 	isCatalogResp  bool
-	keeyAliveCnt   int
+	keepAliveCnt   int
+	catalogCnt     int
+	registerCnt    int
+	unRegisterCnt  int
+	onKeepAlive    func(count int)
+	onRegister     func(count int)
+	onUnRegister   func(count int)
+	onDevGbId      func(gbId string)
+	onCatalog      catalogCallBack
 }
 
-func New(port, srvGbId, branch string) *Server {
+func New(port, srvGbId, branch string, onKeeyAlive, onRegister, onUnRegister callBack, onCatalog catalogCallBack, onDevGbId func(gbId string)) *Server {
 	return &Server{
 		port:           port,
 		showRemoteAddr: true,
@@ -51,6 +60,11 @@ func New(port, srvGbId, branch string) *Server {
 		isOnline:       false,
 		isCatalogResp:  false,
 		host:           getOutboundIP().String(),
+		onKeepAlive:    onKeeyAlive,
+		onCatalog:      onCatalog,
+		onRegister:     onRegister,
+		onUnRegister:   onUnRegister,
+		onDevGbId:      onDevGbId,
 	}
 }
 
@@ -204,8 +218,14 @@ func (s *Server) sendResp(msg *sip.Msg) error {
 
 func (s *Server) handleRegister(msg *sip.Msg) error {
 	if msg.Expires == 0 {
+		s.unRegisterCnt++
+		s.onDevGbId(msg.From.Uri.User)
+		s.onUnRegister(s.unRegisterCnt)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注销信令")
 	} else {
+		s.registerCnt++
+		s.onDevGbId(msg.From.Uri.User)
+		s.onRegister(s.registerCnt)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注册信令")
 		if s.showUA {
 			log.Println("摄像机User-Agent:", msg.UserAgent)
@@ -247,6 +267,7 @@ func (s *Server) parseXml(raw string) (*XmlMsg, error) {
 }
 
 func (s *Server) handleCatalog(xml *XmlMsg) {
+	s.catalogCnt++
 	if len(xml.DeviceList.Items) == 0 {
 		log.Println("对端响应的CATALOG设备个数为0")
 		return
@@ -256,6 +277,7 @@ func (s *Server) handleCatalog(xml *XmlMsg) {
 	log.Println("Chid:", item.ChId)
 	log.Println("Model:", item.Model)
 	log.Println("Manufacturer:", item.Manufacturer)
+	s.onCatalog(s.catalogCnt, item.Name, item.ChId, item.Model, item.Manufacturer)
 	s.isCatalogResp = true
 }
 
@@ -306,14 +328,9 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 			s.showUA = false
 		}
 		s.isOnline = true
-		s.keeyAliveCnt++
-		if s.keeyAliveCnt == 3 {
-			log.Println("摄像机是否注册:", s.isRegistered)
-			log.Println("摄像机是否在线:", s.isOnline)
-			log.Println("Catalog是否响应:", s.isCatalogResp)
-			log.Println("收到了三次KeepAlive信令,摄像机信令验证正常,程序退出")
-			os.Exit(0)
-		}
+		s.keepAliveCnt++
+		s.onDevGbId(msg.From.Uri.User)
+		s.onKeepAlive(s.keepAliveCnt)
 		go s.sendCatalogReq(msg.From)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
@@ -361,15 +378,6 @@ func (s *Server) Run() {
 	if err := s.newConn(); err != nil {
 		log.Fatal("new conn err:", err)
 	}
-	t := time.NewTimer(2 * time.Minute)
-	go func() {
-		<-t.C
-		log.Println("摄像机是否注册:", s.isRegistered)
-		log.Println("摄像机是否在线:", s.isOnline)
-		log.Println("Catalog是否响应:", s.isCatalogResp)
-		log.Println("到达超时时间，程序退出")
-		//os.Exit(0)
-	}()
 	for {
 		msg, err := s.fetchMsg()
 		if err != nil {

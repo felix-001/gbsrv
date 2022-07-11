@@ -24,7 +24,26 @@ let index = {
                     let div = document.getElementById("main");
                     div.innerHTML = message.payload
                     break
-                
+                case "keepalive":
+                    let keepalive = document.getElementById("keepalive");
+                    keepalive.innerHTML = message.payload
+                    break
+                case "register":
+                    let register = document.getElementById("register");
+                    register.innerHTML = message.payload
+                    break
+                case "unregister":
+                    let unregister = document.getElementById("unregister");
+                    unregister.innerHTML = message.payload
+                    break
+                case "devGbId":
+                    let gbid = document.getElementById("devGbId");
+                    gbid.innerHTML = message.payload
+                    break
+                case "catalog":
+                    let catalog = document.getElementById("catalog");
+                    catalog.innerHTML = message.payload
+                    break
             }
         });
     }
