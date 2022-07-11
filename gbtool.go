@@ -117,7 +117,7 @@ func main() {
 		VersionElectron:    VersionElectron,
 	}
 	menuOptions := &astilectron.MenuItemOptions{
-		Label: astikit.StrPtr("File"),
+		Label: astikit.StrPtr("GB28181调试工具"),
 		SubMenu: []*astilectron.MenuItemOptions{
 			{
 				Label:   astikit.StrPtr("关于"),
@@ -131,7 +131,7 @@ func main() {
 		Asset:              Asset,
 		AssetDir:           AssetDir,
 		AstilectronOptions: options,
-		Debug:              true,
+		Debug:              false,
 		MenuOptions:        []*astilectron.MenuItemOptions{menuOptions},
 		OnWait:             onWait,
 		RestoreAssets:      RestoreAssets,
