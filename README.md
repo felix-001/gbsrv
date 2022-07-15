@@ -1,2 +1,0 @@
-# gbsrv
-simple gb srv
