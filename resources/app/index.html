@@ -1,24 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="static/css/base.css"/>
-    <link rel="stylesheet" href="static/lib/astimodaler/astimodaler.css">
-    <link rel="stylesheet" href="static/lib/font-awesome-4.7.0/css/font-awesome.min.css">
+	<style>
+	div.tab {
+		display:flex;
+		background-color:#444444;
+		height:50;
+		color:#666666;
+		align-items:center;
+	}
+	div.info {
+		background-color:#333333;
+		height:100%;
+	}
+	#srv {
+		color: white;
+		padding-left:100px;
+		cursor: pointer;
+	}
+	#cli {
+		padding-left:60px;
+		cursor: pointer;
+	}
+	label.info {
+		width:110px;
+		text-align: right;
+		display: inline-block;
+	}
+
+	</style>
 </head>
 <body>
-    <div class="main" id="main"></div>
-    <br>
-    <div class="devGbId" id="devGbId"></div>
-    <div class="register" id="register"></div>
-    <div class="keepalive" id="keepalive"></div>
-    <div class="unregister" id="unregister"></div>
-    <div class="catalog" id="catalog"></div>
-    <script src="static/lib/astiloader/astiloader.js"></script>
-    <script src="static/lib/astimodaler/astimodaler.js"></script>
-    <script src="static/js/index.js"></script>
-    <script type="text/javascript">
-        index.init();
-    </script>
+<div class="tab" id="tab">
+	<a id="srv" class="btn" data-pressed="true" onclick="btn1Click(this)" onmouseover="mouseover(this)" onmouseout="mouseout(this)">服务器模式</a> 
+	<a id="cli" class="btn" onclick="btn2Click(this)" onmouseover="mouseover(this)" onmouseout="mouseout(this)">客户端模式</a> 
+	<script>
+		function btnCommon(element) {
+			var collection = document.getElementsByClassName("btn");
+			var i;
+			for (i = 0; i < collection.length; i++) {
+				collection[i].style.color = "#666666";
+				collection[i].dataset.pressed = 'false';
+			}
+			element.setAttribute('style', 'color: white')
+			element.dataset.pressed = 'true';
+
+		}
+		function btn1Click(element) {
+			btnCommon(element)
+			console.log("btn1 pressed")
+			//var b = document.getElementsByClassName("myIframe");
+			//b.src = "./gb-srv.html"
+			document.getElementById("div1").style.display="block";
+			document.getElementById("div2").style.display="none";
+		}
+		function btn2Click(element) {
+			btnCommon(element)
+			console.log("btn2 pressed")
+			//var b = document.getElementsByClassName("myIframe");
+			//b.src = "./gb-cli.html"
+			document.getElementById("div2").style.display="block";
+			document.getElementById("div1").style.display="none";
+		}
+		function mouseover(element) {
+			//console.log('mouse over')
+			if (element.dataset.pressed != 'true') {
+				//console.log('not pressed')
+				element.setAttribute('style', 'color: #888888')
+			}
+			
+		}
+		function mouseout(element) {
+			if (element.dataset.pressed != 'true') {
+				element.setAttribute('style', 'color: #666666')
+			}
+		}
+	</script>
+</div>
+
+<div class="info" id="div1" style="display:block;">
+	<p>
+		<input type="checkbox" id="cbox1" value="first_checkbox">
+		<label for="cbox1">保存日志</label>
+	</p>
+</div>
+<div class="info" id="div2" style="display:none;">
+	<div>
+		<label class="info" for="sipSrvId">SIP服务器ID:</label>
+		<input type="text" id="sipSrvId">
+	</div>
+	<div>
+		<label class="info" for="sipAddr">SIP服务器地址:</label>
+		<input type="text" id="sipAddr">
+	</div>
+	<div>
+		<label class="info" for="sipId">设备国标ID:</label>
+		<input type="text" id="sipId">
+	</div>
+	<button style="height:25px;width:100px;margin-top: 10px;margin-left: 70px;">确定</button>
+	<p>
+		<input type="checkbox" id="cbox1" value="first_checkbox">
+		<label for="cbox1">保存日志</label>
+	</p>
+</div>
 </body>
 </html>

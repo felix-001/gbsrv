@@ -104,8 +104,8 @@ func main() {
 		Options: &astilectron.WindowOptions{
 			BackgroundColor: astikit.StrPtr("#333"),
 			Center:          astikit.BoolPtr(true),
-			Height:          astikit.IntPtr(330),
-			Width:           astikit.IntPtr(370),
+			Height:          astikit.IntPtr(600),
+			Width:           astikit.IntPtr(500),
 		},
 	}
 	options := astilectron.Options{
@@ -131,7 +131,7 @@ func main() {
 		Asset:              Asset,
 		AssetDir:           AssetDir,
 		AstilectronOptions: options,
-		Debug:              false,
+		Debug:              true,
 		MenuOptions:        []*astilectron.MenuItemOptions{menuOptions},
 		OnWait:             onWait,
 		RestoreAssets:      RestoreAssets,
