@@ -74,16 +74,12 @@
 		function btn1Click(element) {
 			btnCommon(element)
 			console.log("btn1 pressed")
-			//var b = document.getElementsByClassName("myIframe");
-			//b.src = "./gb-srv.html"
 			document.getElementById("div1").style.display="block";
 			document.getElementById("div2").style.display="none";
 		}
 		function btn2Click(element) {
 			btnCommon(element)
 			console.log("btn2 pressed")
-			//var b = document.getElementsByClassName("myIframe");
-			//b.src = "./gb-cli.html"
 			document.getElementById("div2").style.display="block";
 			document.getElementById("div1").style.display="none";
 		}
@@ -111,7 +107,6 @@
 		<label class="info" for="sipId">SIP服务器端口:</label>
 		<input class="srvinput" type="text" id="sipId" value="5061" disabled="disabled">
 	</div>
-	<!--p-->
 	<div>
 		<label class="info" for="sipSrvId">SIP服务器ID:</label>
 		<input class="srvinput" type="text" id="sipSrvId" value="31011500991320015103" disabled="disabled">
@@ -120,26 +115,9 @@
 		<input type="checkbox" id="cbox1" value="first_checkbox" style="accent-color: #BFC9CA;margin-left: 10px;">
 		<label for="cbox1">保存日志</label>
 	</div>
-	<!--/p-->
-	<button style="height:25px;width:150px;margin-top: 10px;margin-left: 70px; color:#BFC9CA; background-color: #797D7F;">启动国标服务器</button>
+	<button style="height:25px;width:150px;margin-top: 10px;margin-left: 70px; color:#BFC9CA; background-color: #1C2833;">启动国标服务器</button>
 </div>
-<!--
-<div class="info" id="div1" style="display:block;color:#BFC9CA;">
-	<div>
-		<span class="srvinfo"> SIP服务器ID:</span> <span class="srvinfo2"> 31011500991320015103 </span>
-	</div>
-	<div>
-		<span class="srvinfo"> SIP服务器IP:</span> <span class="srvinfo2"> 192.168.1.1 </span>
-	</div>
-	<div>
-		<span class="srvinfo">SIP服务器端口: </span> <span class="srvinfo2"> 5061 </span>
-	</div>
-	<p style="background-color: #333333;">
-		<input type="checkbox" id="cbox1" value="first_checkbox" style="margin-left:10px;">
-		<label for="cbox1">保存日志</label>
-	</p>
-</div>
--->
+
 <div class="info" id="div2" style="display:none;color:#BFC9CA;">
 	<div>
 		<label style="margin-top: 20px;" class="info" for="sipSrvId">SIP服务器ID:</label>
@@ -153,13 +131,11 @@
 		<label class="info" for="sipId">设备国标ID:</label>
 		<input type="text" id="sipId" style="background-color: #515A5A;width: 200px;">
 	</div>
-	<!--p-->
 	<div>
 		<input type="checkbox" id="cbox1" value="first_checkbox" style="accent-color: #BFC9CA;margin-left: 10px;">
 		<label for="cbox1">保存日志</label>
 	</div>
-	<!--/p-->
-	<button style="height:25px;width:150px;margin-top: 10px;margin-left: 70px; color:#BFC9CA; background-color: #797D7F;">启动国标客户端</button>
+	<button style="height:25px;width:150px;margin-top: 10px;margin-left: 70px; color:#BFC9CA; background-color: #1C2833;">启动国标客户端</button>
 </div>
 </body>
 </html>
