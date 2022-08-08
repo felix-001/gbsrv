@@ -71,6 +71,8 @@
 <div class="tab" id="tab">
 	<a id="srv" data-pressed="true" class="tabbtn" onclick="btn1Click(this)" onmouseover="mouseover(this)" onmouseout="mouseout(this)">服务器模式</a> 
 	<a id="cli" class="tabbtn" onclick="btn2Click(this)" onmouseover="mouseover(this)" onmouseout="mouseout(this)">客户端模式</a> 
+	<script src="static/lib/astiloader/astiloader.js"></script>
+    	<script src="static/lib/astimodaler/astimodaler.js"></script>
 	<script>
 		function btnCommon(element) {
 			var collection = document.getElementsByClassName("tabbtn");
@@ -112,22 +114,65 @@
 				console.log("true")
 				elem.innerHTML = "退出"
 				srvRunStatus = true
+				let message = {"name": "start"};
+				astilectron.sendMessage(message, null)
 			} else {
 				console.log("false")
 				elem.innerHTML = "启动"
 				srvRunStatus = false
+				let message = {"name": "end"};
+				astilectron.sendMessage(message, null)
 			}
 		}
+		function onMessage(message) {
+			switch (message.name) {
+				case "about":
+					index.about(message.payload);
+					return {payload: "payload"};
+				case "msg":
+					console.log("get msg from go")
+					let div = document.getElementById("main");
+					console.log("payload", message.payload)
+					obj = JSON.parse(message.payload)
+					document.getElementById("sipSrvAddr").value = obj.srvGbid
+					//div.innerHTML = message.payload
+					break
+				case "keepalive":
+					let keepalive = document.getElementById("keepalive");
+					keepalive.innerHTML = message.payload
+					break
+				case "register":
+					let register = document.getElementById("register");
+					register.innerHTML = message.payload
+					break
+				case "unregister":
+					let unregister = document.getElementById("unregister");
+					unregister.innerHTML = message.payload
+					break
+				case "devGbId":
+					let gbid = document.getElementById("devGbId");
+					gbid.innerHTML = message.payload
+					break
+				case "catalog":
+					let catalog = document.getElementById("catalog");
+					catalog.innerHTML = message.payload
+					break
+			}
+		}
+		asticode.modaler.init()
+        	document.addEventListener('astilectron-ready', function() {
+			astilectron.onMessage(onMessage);
+        	})
 	</script>
 </div>
 <div class="info" id="div1" style="display:block;color:#BFC9CA;">
 	<div>
 		<label style="margin-top: 20px;" class="info" for="sipAddr">SIP服务器地址:</label>
-		<input class="srvinput" type="text" id="sipAddr" value="unknow" disabled="disabled">
+		<input class="srvinput" type="text" id="sipSrvAddr" value="unknow" disabled="disabled">
 	</div>
 	<div>
 		<label class="info" for="sipId">SIP服务器端口:</label>
-		<input class="srvinput" type="text" id="sipId" value="unknow" disabled="disabled">
+		<input class="srvinput" type="text" id="sipSrvPort" value="unknow" disabled="disabled">
 	</div>
 	<div>
 		<label class="info" for="sipSrvId">SIP服务器ID:</label>

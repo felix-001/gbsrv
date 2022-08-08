@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"gbsrv/server"
 	"log"
@@ -26,7 +27,34 @@ var (
 	srv                *server.Server
 )
 
+type sipInfo struct {
+	SrvGbid string `json:"srvGbid"`
+	SrvIp   string `json:"srvIp"`
+	SrvPort string `json:"srvPort"`
+}
+
 func handleMessages(_ *astilectron.Window, m bootstrap.MessageIn) (payload interface{}, err error) {
+	switch m.Name {
+	case "start":
+		log.Println("got start msg from js")
+		go srv.Run()
+		info := &sipInfo{
+			SrvGbid: SrvGbId,
+			SrvIp:   srv.GetHost(),
+			SrvPort: SipSrvPort,
+		}
+		jsonbody, err := json.Marshal(info)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		log.Println("jsonbody:", jsonbody)
+		if err := bootstrap.SendMessage(w, "msg", string(jsonbody), func(m *bootstrap.MessageIn) {}); err != nil {
+			log.Println(fmt.Errorf("sending about event failed: %w", err))
+		}
+	case "end":
+	default:
+	}
 	return
 }
 
@@ -85,14 +113,6 @@ func onDevGbId(gbId string) {
 
 func onWait(_ *astilectron.Astilectron, ws []*astilectron.Window, _ *astilectron.Menu, _ *astilectron.Tray, _ *astilectron.Menu) error {
 	w = ws[0]
-	go srv.Run()
-	data := "<div>国标服务器编码: " + SrvGbId + "</div>"
-	data += "<div>国标服务器IP: " + srv.GetHost() + "</div>"
-	data += "<div>国标服务器端口: " + SipSrvPort + "</div>"
-	err := bootstrap.SendMessage(w, "msg", data, func(m *bootstrap.MessageIn) {})
-	if err != nil {
-		log.Println(fmt.Errorf("sending about event failed: %w", err))
-	}
 	return nil
 }
 
