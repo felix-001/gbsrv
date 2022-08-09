@@ -48,7 +48,7 @@ func handleMessages(_ *astilectron.Window, m bootstrap.MessageIn) (payload inter
 			log.Println(err)
 			return nil, err
 		}
-		log.Println("jsonbody:", jsonbody)
+		log.Println("jsonbody:", string(jsonbody))
 		if err := bootstrap.SendMessage(w, "msg", string(jsonbody), func(m *bootstrap.MessageIn) {}); err != nil {
 			log.Println(fmt.Errorf("sending about event failed: %w", err))
 		}
@@ -68,7 +68,7 @@ func showMenu(e astilectron.Event) (deleteListener bool) {
 
 func onKeepAlive(count int) {
 	log.Println("发送心跳消息")
-	data := fmt.Sprintf("收到摄像机心跳信令%d次", count)
+	data := fmt.Sprintf("%d", count)
 	err := bootstrap.SendMessage(w, "keepalive", data, func(m *bootstrap.MessageIn) {})
 	if err != nil {
 		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
@@ -76,7 +76,7 @@ func onKeepAlive(count int) {
 }
 
 func onRegister(count int) {
-	data := fmt.Sprintf("收到摄像机注册信令%d次", count)
+	data := fmt.Sprintf("%d", count)
 	err := bootstrap.SendMessage(w, "register", data, func(m *bootstrap.MessageIn) {})
 	if err != nil {
 		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
@@ -84,28 +84,42 @@ func onRegister(count int) {
 }
 
 func onUnRegister(count int) {
-	data := fmt.Sprintf("收到摄像机注销信令%d次", count)
+	data := fmt.Sprintf("%d", count)
 	err := bootstrap.SendMessage(w, "unregister", data, func(m *bootstrap.MessageIn) {})
 	if err != nil {
 		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
 	}
 }
 
+type Catalog struct {
+	Count        int    `json:"count"`
+	Name         string `json:"name"`
+	Chid         string `json:"chid"`
+	Model        string `json:"model"`
+	Manufacturer string `json:"manufacturer"`
+}
+
 func onCatalog(count int, name, chid, model, manufacturer string) {
-	data := fmt.Sprintf("<div>收到摄像机CATALOG信令%d次</div>", count)
-	data += fmt.Sprintf("<div>Name: %s</div>", name)
-	data += fmt.Sprintf("<div>Chid: %s</div>", chid)
-	data += fmt.Sprintf("<div>Model: %s</div>", model)
-	data += fmt.Sprintf("<div>Manufacturer: %s</div>", manufacturer)
-	err := bootstrap.SendMessage(w, "catalog", data, func(m *bootstrap.MessageIn) {})
+	catalog := Catalog{
+		Count:        count,
+		Name:         name,
+		Chid:         chid,
+		Model:        model,
+		Manufacturer: manufacturer,
+	}
+	jsonbody, err := json.Marshal(&catalog)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	err = bootstrap.SendMessage(w, "catalog", string(jsonbody), func(m *bootstrap.MessageIn) {})
 	if err != nil {
 		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
 	}
 }
 
 func onDevGbId(gbId string) {
-	data := fmt.Sprintf("摄像机国标ID: %s", gbId)
-	err := bootstrap.SendMessage(w, "devGbId", data, func(m *bootstrap.MessageIn) {})
+	err := bootstrap.SendMessage(w, "devGbId", gbId, func(m *bootstrap.MessageIn) {})
 	if err != nil {
 		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
 	}

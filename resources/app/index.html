@@ -121,14 +121,14 @@
 				elem.innerHTML = "启动"
 				srvRunStatus = false
 				let message = {"name": "end"};
-				astilectron.sendMessage(message, null)
+				astilectron.sendMessage(message, function(message){})
 			}
 		}
 		function onMessage(message) {
 			switch (message.name) {
 				case "about":
-					index.about(message.payload);
-					return {payload: "payload"};
+					//index.about(message.payload);
+					//return {payload: "payload"};
 				case "msg":
 					console.log("get msg from go")
 					let div = document.getElementById("main");
@@ -155,14 +155,23 @@
 					break
 				case "catalog":
 					let catalog = document.getElementById("catalog");
-					catalog.innerHTML = message.payload
+					obj = JSON.parse(message.payload)
+					catalog.innerHTML = obj.count
+					let name = document.getElementById("name");
+					name.innerHTML = obj.name
+					let chid = document.getElementById("chid");
+					chid.innerHTML = obj.chid
+					let model = document.getElementById("model");
+					model.innerHTML = obj.model
+					let manufacturer = document.getElementById("manufacturer");
+					manufacturer.innerHTML = obj.manufacturer
 					break
 			}
 		}
-		asticode.modaler.init()
+		asticode.modaler.init();
         	document.addEventListener('astilectron-ready', function() {
 			astilectron.onMessage(onMessage);
-        	})
+        	});
 	</script>
 </div>
 <div class="info" id="div1" style="display:block;color:#BFC9CA;">
@@ -184,13 +193,14 @@
 	</div>
 	<button class="btn" id="gbsrvRun" onclick="gbsrvClick(this)">启动</button>
 	<div id="terminal">
-		<p class="log">Name: <strong>unknow</strong></p>
-		<p class="log">Chid: <strong>unknow</strong></p>
-		<p class="log">Model: <strong>unknow</strong</p>
-		<p class="log">Manufacturer: <strong>unknow</strong</p>
-		<p class="log">收到<strong class="count">0</strong>次keepalive信令</p>
-		<p class="log">收到<strong class="count">0</strong>次register信令</p>
-		<p class="log">收到<strong class="count">0</strong>次catalog信令</p>
+		<p class="log">设备国标ID: <strong id="devGbId">unknow</strong></p>
+		<p class="log">Name: <strong id="name">unknow</strong></p>
+		<p class="log">Chid: <strong id="chid">unknow</strong></p>
+		<p class="log">Model: <strong id="model">unknow</strong</p>
+		<p class="log">Manufacturer: <strong id="manufacturer">unknow</strong</p>
+		<p class="log">收到<strong class="count" id="keepalive">0</strong>次keepalive信令</p>
+		<p class="log">收到<strong class="count" id="register">0</strong>次register信令</p>
+		<p class="log">收到<strong class="count" id="catalog">0</strong>次catalog信令</p>
 	</div>
 </div>
 
