@@ -65,6 +65,9 @@
 	.count {
 		color: red;
 	}
+	#pGbId {
+		margin-top: 30px;
+	}
 	</style>
 </head>
 <body>
@@ -115,7 +118,7 @@
 				elem.innerHTML = "退出"
 				srvRunStatus = true
 				let message = {"name": "start"};
-				astilectron.sendMessage(message, null)
+				astilectron.sendMessage(message, function(message){})
 			} else {
 				console.log("false")
 				elem.innerHTML = "启动"
@@ -124,18 +127,22 @@
 				astilectron.sendMessage(message, function(message){})
 			}
 		}
-		function onMessage(message) {
+		
+		asticode.modaler.init();
+        	document.addEventListener('astilectron-ready', function() {
+			astilectron.onMessage(function(message) {
+			console.log("message.name", message.name)
 			switch (message.name) {
 				case "about":
 					//index.about(message.payload);
 					//return {payload: "payload"};
 				case "msg":
 					console.log("get msg from go")
-					let div = document.getElementById("main");
 					console.log("payload", message.payload)
 					obj = JSON.parse(message.payload)
-					document.getElementById("sipSrvAddr").value = obj.srvGbid
-					//div.innerHTML = message.payload
+					document.getElementById("sipSrvAddr").value = obj.srvIp
+					document.getElementById("sipSrvId").value = obj.srvGbid
+					document.getElementById("sipSrvPort").value = obj.srvPort
 					break
 				case "keepalive":
 					let keepalive = document.getElementById("keepalive");
@@ -167,11 +174,8 @@
 					manufacturer.innerHTML = obj.manufacturer
 					break
 			}
-		}
-		asticode.modaler.init();
-        	document.addEventListener('astilectron-ready', function() {
-			astilectron.onMessage(onMessage);
-        	});
+		});
+	});
 	</script>
 </div>
 <div class="info" id="div1" style="display:block;color:#BFC9CA;">
@@ -193,7 +197,7 @@
 	</div>
 	<button class="btn" id="gbsrvRun" onclick="gbsrvClick(this)">启动</button>
 	<div id="terminal">
-		<p class="log">设备国标ID: <strong id="devGbId">unknow</strong></p>
+		<p class="log" id="pGbId">设备国标ID: <strong id="devGbId">unknow</strong></p>
 		<p class="log">Name: <strong id="name">unknow</strong></p>
 		<p class="log">Chid: <strong id="chid">unknow</strong></p>
 		<p class="log">Model: <strong id="model">unknow</strong</p>
