@@ -66,7 +66,7 @@
 		color: red;
 	}
 	#pGbId {
-		margin-top: 30px;
+		padding-top: 20px;
 	}
 	</style>
 </head>
@@ -173,6 +173,10 @@
 					let manufacturer = document.getElementById("manufacturer");
 					manufacturer.innerHTML = obj.manufacturer
 					break
+				case "peerAddr":
+					let peerAddr = document.getElementById("devAddr");
+					peerAddr.innerHTML = message.payload
+					break
 			}
 		});
 	});
@@ -198,6 +202,7 @@
 	<button class="btn" id="gbsrvRun" onclick="gbsrvClick(this)">启动</button>
 	<div id="terminal">
 		<p class="log" id="pGbId">设备国标ID: <strong id="devGbId">unknow</strong></p>
+		<p class="log">设备地址: <strong id="devAddr">unknow</strong></p>
 		<p class="log">Name: <strong id="name">unknow</strong></p>
 		<p class="log">Chid: <strong id="chid">unknow</strong></p>
 		<p class="log">Model: <strong id="model">unknow</strong</p>

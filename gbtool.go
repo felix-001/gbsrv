@@ -79,7 +79,7 @@ func onRegister(count int) {
 	data := fmt.Sprintf("%d", count)
 	err := bootstrap.SendMessage(w, "register", data, func(m *bootstrap.MessageIn) {})
 	if err != nil {
-		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
+		log.Println(fmt.Errorf("sending register event failed: %w", err))
 	}
 }
 
@@ -87,7 +87,7 @@ func onUnRegister(count int) {
 	data := fmt.Sprintf("%d", count)
 	err := bootstrap.SendMessage(w, "unregister", data, func(m *bootstrap.MessageIn) {})
 	if err != nil {
-		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
+		log.Println(fmt.Errorf("sending unregister event failed: %w", err))
 	}
 }
 
@@ -114,14 +114,21 @@ func onCatalog(count int, name, chid, model, manufacturer string) {
 	}
 	err = bootstrap.SendMessage(w, "catalog", string(jsonbody), func(m *bootstrap.MessageIn) {})
 	if err != nil {
-		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
+		log.Println(fmt.Errorf("sending catalog event failed: %w", err))
 	}
 }
 
 func onDevGbId(gbId string) {
 	err := bootstrap.SendMessage(w, "devGbId", gbId, func(m *bootstrap.MessageIn) {})
 	if err != nil {
-		log.Println(fmt.Errorf("sending keepalive event failed: %w", err))
+		log.Println(fmt.Errorf("sending devGbId event failed: %w", err))
+	}
+}
+
+func onPeerAddr(peerAddr string) {
+	err := bootstrap.SendMessage(w, "peerAddr", peerAddr, func(m *bootstrap.MessageIn) {})
+	if err != nil {
+		log.Println(fmt.Errorf("sending peerAddr event failed: %w", err))
 	}
 }
 
@@ -160,7 +167,7 @@ func main() {
 			{Role: astilectron.MenuItemRoleClose},
 		},
 	}
-	srv = server.New(SipSrvPort, SrvGbId, branch, onKeepAlive, onRegister, onUnRegister, onCatalog, onDevGbId)
+	srv = server.New(SipSrvPort, SrvGbId, branch, onKeepAlive, onRegister, onUnRegister, onCatalog, onDevGbId, onPeerAddr)
 	err := bootstrap.Run(bootstrap.Options{
 		Asset:              Asset,
 		AssetDir:           AssetDir,

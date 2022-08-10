@@ -45,9 +45,10 @@ type Server struct {
 	onUnRegister   func(count int)
 	onDevGbId      func(gbId string)
 	onCatalog      catalogCallBack
+	onPeerAddr     func(peerAddr string)
 }
 
-func New(port, srvGbId, branch string, onKeeyAlive, onRegister, onUnRegister callBack, onCatalog catalogCallBack, onDevGbId func(gbId string)) *Server {
+func New(port, srvGbId, branch string, onKeeyAlive, onRegister, onUnRegister callBack, onCatalog catalogCallBack, onDevGbId func(gbId string), onPeerAddr func(peerAddr string)) *Server {
 	return &Server{
 		port:           port,
 		showRemoteAddr: true,
@@ -65,6 +66,7 @@ func New(port, srvGbId, branch string, onKeeyAlive, onRegister, onUnRegister cal
 		onRegister:     onRegister,
 		onUnRegister:   onUnRegister,
 		onDevGbId:      onDevGbId,
+		onPeerAddr:     onPeerAddr,
 	}
 }
 
@@ -93,6 +95,7 @@ func (s *Server) fetchMsg() (*sip.Msg, error) {
 	}
 	if s.showRemoteAddr {
 		log.Println("摄像机地址:", remoteAddr)
+		s.onPeerAddr(remoteAddr.String())
 		s.showRemoteAddr = false
 	}
 	s.remoteAddr = remoteAddr
