@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gbsrv/client"
 	"gbsrv/server"
 	"log"
 
@@ -78,6 +79,9 @@ func handleMessages(_ *astilectron.Window, m bootstrap.MessageIn) (payload inter
 			return nil, err
 		}
 		log.Printf("%+v\n", payload)
+		if err := client.SendMessage(payload.SipSrvId, payload.SipSrvAddr, payload.SipId); err != nil {
+			return nil, err
+		}
 	default:
 	}
 	return

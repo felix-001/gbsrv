@@ -37,8 +37,10 @@ func main() {
 				Label:   astikit.StrPtr("关于"),
 				OnClick: showMenu,
 			},
-			{Role: astilectron.MenuItemRoleClose},
+			//{Role: astilectron.MenuItemRoleClose},
+			{Role: astilectron.MenuItemRolePaste},
 		},
+		Role: astilectron.MenuItemRolePaste,
 	}
 	srv = server.New(SipSrvPort, SrvGbId, branch, onKeepAlive, onRegister, onUnRegister, onCatalog, onDevGbId, onPeerAddr)
 	err := bootstrap.Run(bootstrap.Options{
