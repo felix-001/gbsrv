@@ -5,8 +5,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"os"
 	"strconv"
 
 	"github.com/jart/gosip/sip"
@@ -40,12 +42,14 @@ type Server struct {
 	catalogCnt     int
 	registerCnt    int
 	unRegisterCnt  int
+	logEnable      bool
 	onKeepAlive    func(count int)
 	onRegister     func(count int)
 	onUnRegister   func(count int)
 	onDevGbId      func(gbId string)
 	onCatalog      catalogCallBack
 	onPeerAddr     func(peerAddr string)
+	running        bool
 }
 
 func New(port, srvGbId, branch string, onKeeyAlive, onRegister, onUnRegister callBack, onCatalog catalogCallBack, onDevGbId func(gbId string), onPeerAddr func(peerAddr string)) *Server {
@@ -57,6 +61,7 @@ func New(port, srvGbId, branch string, onKeeyAlive, onRegister, onUnRegister cal
 		cseq:           0,
 		catalogResp200: true,
 		showUA:         true,
+		running:        true,
 		isRegistered:   false,
 		isOnline:       false,
 		isCatalogResp:  false,
@@ -377,11 +382,23 @@ func (s *Server) GetPort() string {
 	return s.port
 }
 
-func (s *Server) Run() {
+func (s *Server) Run(logEnable bool) {
+	f, err := os.OpenFile("out.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
+	if err != nil {
+		return
+	}
+	defer func() {
+		f.Close()
+	}()
+
+	multiWriter := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(multiWriter)
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	if err := s.newConn(); err != nil {
 		log.Fatal("new conn err:", err)
 	}
-	for {
+	for s.running {
 		msg, err := s.fetchMsg()
 		if err != nil {
 			if err == errInvalidMsg {
@@ -394,4 +411,8 @@ func (s *Server) Run() {
 		}
 	}
 
+}
+
+func (s *Server) Quit() {
+	s.running = false
 }

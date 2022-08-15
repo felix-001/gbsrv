@@ -113,11 +113,12 @@
 		}
 		var srvRunStatus = false
 		function gbsrvClick(elem) {
+			let cbox = document.getElementById("cbox1");
 			if (srvRunStatus == false) {
 				console.log("true")
 				elem.innerHTML = "退出"
 				srvRunStatus = true
-				let message = {"name": "start"};
+				let message = {"name": "start", "payload":{"cboxChecked": cbox.checked}};
 				astilectron.sendMessage(message, function(message){})
 			} else {
 				console.log("false")
@@ -127,59 +128,79 @@
 				astilectron.sendMessage(message, function(message){})
 			}
 		}
+
+		function onMessage(message) {
+			console.log("message.name", message.name)
+			switch (message.name) {
+			case "about":
+				//index.about(message.payload);
+				//return {payload: "payload"};
+			case "msg":
+				console.log("get msg from go")
+				console.log("payload", message.payload)
+				obj = JSON.parse(message.payload)
+				document.getElementById("sipSrvAddr").value = obj.srvIp
+				document.getElementById("sipSrvId").value = obj.srvGbid
+				document.getElementById("sipSrvPort").value = obj.srvPort
+				break
+			case "keepalive":
+				let keepalive = document.getElementById("keepalive");
+				keepalive.innerHTML = message.payload
+				break
+			case "register":
+				let register = document.getElementById("register");
+				register.innerHTML = message.payload
+				break
+			case "unregister":
+				let unregister = document.getElementById("unregister");
+				unregister.innerHTML = message.payload
+				break
+			case "devGbId":
+				let gbid = document.getElementById("devGbId");
+				gbid.innerHTML = message.payload
+				break
+			case "catalog":
+				let catalog = document.getElementById("catalog");
+				obj = JSON.parse(message.payload)
+				catalog.innerHTML = obj.count
+				let name = document.getElementById("name");
+				name.innerHTML = obj.name
+				let chid = document.getElementById("chid");
+				chid.innerHTML = obj.chid
+				let model = document.getElementById("model");
+				model.innerHTML = obj.model
+				let manufacturer = document.getElementById("manufacturer");
+				manufacturer.innerHTML = obj.manufacturer
+				break
+			case "peerAddr":
+				let peerAddr = document.getElementById("devAddr");
+				peerAddr.innerHTML = message.payload
+				break
+			}
+		}
 		
 		asticode.modaler.init();
         	document.addEventListener('astilectron-ready', function() {
-			astilectron.onMessage(function(message) {
-			console.log("message.name", message.name)
-			switch (message.name) {
-				case "about":
-					//index.about(message.payload);
-					//return {payload: "payload"};
-				case "msg":
-					console.log("get msg from go")
-					console.log("payload", message.payload)
-					obj = JSON.parse(message.payload)
-					document.getElementById("sipSrvAddr").value = obj.srvIp
-					document.getElementById("sipSrvId").value = obj.srvGbid
-					document.getElementById("sipSrvPort").value = obj.srvPort
-					break
-				case "keepalive":
-					let keepalive = document.getElementById("keepalive");
-					keepalive.innerHTML = message.payload
-					break
-				case "register":
-					let register = document.getElementById("register");
-					register.innerHTML = message.payload
-					break
-				case "unregister":
-					let unregister = document.getElementById("unregister");
-					unregister.innerHTML = message.payload
-					break
-				case "devGbId":
-					let gbid = document.getElementById("devGbId");
-					gbid.innerHTML = message.payload
-					break
-				case "catalog":
-					let catalog = document.getElementById("catalog");
-					obj = JSON.parse(message.payload)
-					catalog.innerHTML = obj.count
-					let name = document.getElementById("name");
-					name.innerHTML = obj.name
-					let chid = document.getElementById("chid");
-					chid.innerHTML = obj.chid
-					let model = document.getElementById("model");
-					model.innerHTML = obj.model
-					let manufacturer = document.getElementById("manufacturer");
-					manufacturer.innerHTML = obj.manufacturer
-					break
-				case "peerAddr":
-					let peerAddr = document.getElementById("devAddr");
-					peerAddr.innerHTML = message.payload
-					break
-			}
+			astilectron.onMessage(onMessage);
 		});
-	});
+		function cboxClick(elem) {
+			if (elem.checked == true){
+				let message = {"name": "savelogEnable"};
+				astilectron.sendMessage(message, function(message){})
+			} else {
+				let message = {"name": "savelogDisable"};
+				astilectron.sendMessage(message, function(message){})
+			}
+		}
+
+		function sendMessage(elem) {
+			console.log("sendMessage")
+			let sipSrvId = document.getElementById("sipSrvId2").value
+			let sipSrvAddr = document.getElementById("sipSrvAddr2").value
+			let sipId = document.getElementById("sipId").value
+			let msg = {"name": "sendMessage", "payload":{ "sipSrvId": sipSrvId, "sipSrvAddr": sipSrvAddr, "sipId":sipId} }
+			astilectron.sendMessage(msg, function(message){})
+		}
 	</script>
 </div>
 <div class="info" id="div1" style="display:block;color:#BFC9CA;">
@@ -196,7 +217,7 @@
 		<input class="srvinput" type="text" id="sipSrvId" value="unknow" disabled="disabled">
 	</div>
 	<div>
-		<input type="checkbox" class="checkbox" id="cbox1" value="first_checkbox">
+		<input type="checkbox" class="checkbox" id="cbox1" value="first_checkbox" onclick="cboxClick(this)">
 		<label for="cbox1">保存日志</label>
 	</div>
 	<button class="btn" id="gbsrvRun" onclick="gbsrvClick(this)">启动</button>
@@ -216,11 +237,11 @@
 <div class="info" id="div2" style="display:none;color:#BFC9CA;">
 	<div>
 		<label style="margin-top: 20px;" class="info" for="sipSrvId">SIP服务器ID:</label>
-		<input type="text" class="srvinput" id="sipSrvId">
+		<input type="text" class="srvinput" id="sipSrvId2">
 	</div>
 	<div>
-		<label class="info" for="sipAddr">SIP服务器地址:</label>
-		<input type="text" class="srvinput" id="sipAddr">
+		<label class="info" for="sipSrvAddr">SIP服务器地址:</label>
+		<input type="text" class="srvinput" id="sipSrvAddr2">
 	</div>
 	<div>
 		<label class="info" for="sipId">设备国标ID:</label>
@@ -230,7 +251,7 @@
 		<input type="checkbox" class="checkbox" id="cbox1" value="first_checkbox">
 		<label for="cbox1">保存日志</label>
 	</div>
-	<button class="btn">发送信令</button>
+	<button class="btn" onclick="sendMessage(this)">发送信令</button>
 	<div id="terminal">
 		<p class="log" id="srvcliLog"></p>
 	</div>
