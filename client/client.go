@@ -1,17 +1,20 @@
 package client
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/asticode/go-astilectron"
+	bootstrap "github.com/asticode/go-astilectron-bootstrap"
 	"github.com/jart/gosip/sip"
 	"github.com/jart/gosip/util"
 )
 
-func SendMessage(srvId, srvAddr, devId string) error {
+func SendMessage(srvId, srvAddr, devId string, w *astilectron.Window) error {
 	ss := strings.Split(srvAddr, ":")
 	host := ss[0]
 	port, err := strconv.ParseInt(ss[1], 10, 32)
@@ -84,5 +87,9 @@ func SendMessage(srvId, srvAddr, devId string) error {
 		return err
 	}
 	log.Println("recv msg:\n", msg)
+	err = bootstrap.SendMessage(w, "sipResp", msg.String(), func(m *bootstrap.MessageIn) {})
+	if err != nil {
+		log.Println(fmt.Errorf("sending sipResp event failed: %w", err))
+	}
 	return nil
 }

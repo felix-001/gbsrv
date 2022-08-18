@@ -176,6 +176,8 @@
 				let peerAddr = document.getElementById("devAddr");
 				peerAddr.innerHTML = message.payload
 				break
+			case "sipResp":
+				document.getElementById("srvcliLog").innerHTML = message.payload	
 			}
 		}
 		
@@ -198,7 +200,8 @@
 			let sipSrvId = document.getElementById("sipSrvId2").value
 			let sipSrvAddr = document.getElementById("sipSrvAddr2").value
 			let sipId = document.getElementById("sipId").value
-			let msg = {"name": "sendMessage", "payload":{ "sipSrvId": sipSrvId, "sipSrvAddr": sipSrvAddr, "sipId":sipId} }
+			let cbox = document.getElementById("cbox2");
+			let msg = {"name": "sendMessage", "payload":{ "sipSrvId": sipSrvId, "sipSrvAddr": sipSrvAddr, "sipId":sipId, "cboxChecked": cbox.checked} }
 			astilectron.sendMessage(msg, function(message){})
 		}
 	</script>
@@ -237,18 +240,18 @@
 <div class="info" id="div2" style="display:none;color:#BFC9CA;">
 	<div>
 		<label style="margin-top: 20px;" class="info" for="sipSrvId">SIP服务器ID:</label>
-		<input type="text" class="srvinput" id="sipSrvId2">
+		<input type="text" class="srvinput" id="sipSrvId2" value="31011500002000000001">
 	</div>
 	<div>
 		<label class="info" for="sipSrvAddr">SIP服务器地址:</label>
-		<input type="text" class="srvinput" id="sipSrvAddr2">
+		<input type="text" class="srvinput" id="sipSrvAddr2" value="218.98.28.38:5061">
 	</div>
 	<div>
 		<label class="info" for="sipId">设备国标ID:</label>
 		<input type="text" class="srvinput" id="sipId" style="background-color: #515A5A;width: 200px;">
 	</div>
 	<div>
-		<input type="checkbox" class="checkbox" id="cbox1" value="first_checkbox">
+		<input type="checkbox" class="checkbox" id="cbox2" value="first_checkbox">
 		<label for="cbox1">保存日志</label>
 	</div>
 	<button class="btn" onclick="sendMessage(this)">发送信令</button>

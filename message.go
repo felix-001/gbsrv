@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"gbsrv/client"
 	"gbsrv/server"
+	"io"
 	"log"
+	"os"
 
 	"github.com/asticode/go-astilectron"
 	bootstrap "github.com/asticode/go-astilectron-bootstrap"
@@ -34,9 +36,10 @@ type sipInfo struct {
 }
 
 type SipSrvInfo struct {
-	SipSrvAddr string `json:"sipSrvAddr"`
-	SipSrvId   string `json:"sipSrvId"`
-	SipId      string `json:"sipId"`
+	SipSrvAddr  string `json:"sipSrvAddr"`
+	SipSrvId    string `json:"sipSrvId"`
+	SipId       string `json:"sipId"`
+	CboxChecked bool   `json:"cboxChecked"`
 }
 
 func handleMessages(_ *astilectron.Window, m bootstrap.MessageIn) (payload interface{}, err error) {
@@ -79,7 +82,21 @@ func handleMessages(_ *astilectron.Window, m bootstrap.MessageIn) (payload inter
 			return nil, err
 		}
 		log.Printf("%+v\n", payload)
-		if err := client.SendMessage(payload.SipSrvId, payload.SipSrvAddr, payload.SipId); err != nil {
+		if payload.CboxChecked {
+			f, err := os.OpenFile("out.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
+			if err != nil {
+				return nil, err
+			}
+			defer func() {
+				f.Close()
+			}()
+
+			multiWriter := io.MultiWriter(os.Stdout, f)
+			log.SetOutput(multiWriter)
+
+			log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+		}
+		if err := client.SendMessage(payload.SipSrvId, payload.SipSrvAddr, payload.SipId, w); err != nil {
 			return nil, err
 		}
 	default:
