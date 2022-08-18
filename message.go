@@ -87,10 +87,6 @@ func handleMessages(_ *astilectron.Window, m bootstrap.MessageIn) (payload inter
 			if err != nil {
 				return nil, err
 			}
-			defer func() {
-				f.Close()
-			}()
-
 			multiWriter := io.MultiWriter(os.Stdout, f)
 			log.SetOutput(multiWriter)
 

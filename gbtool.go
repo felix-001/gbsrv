@@ -18,8 +18,8 @@ func main() {
 		Options: &astilectron.WindowOptions{
 			BackgroundColor: astikit.StrPtr("#333"),
 			Center:          astikit.BoolPtr(true),
-			Height:          astikit.IntPtr(500),
-			Width:           astikit.IntPtr(430),
+			Height:          astikit.IntPtr(550),
+			Width:           astikit.IntPtr(450),
 		},
 	}
 	options := astilectron.Options{
@@ -31,7 +31,7 @@ func main() {
 		VersionElectron:    VersionElectron,
 	}
 	menuOptions := &astilectron.MenuItemOptions{
-		Label: astikit.StrPtr("GB28181调试工具"),
+		Label: astikit.StrPtr("编辑"),
 		SubMenu: []*astilectron.MenuItemOptions{
 			{
 				Label:   astikit.StrPtr("关于"),
