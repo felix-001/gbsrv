@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gbsrv/client"
 	"gbsrv/server"
-	"io"
 	"log"
 	"os"
 
@@ -87,8 +86,9 @@ func handleMessages(_ *astilectron.Window, m bootstrap.MessageIn) (payload inter
 			if err != nil {
 				return nil, err
 			}
-			multiWriter := io.MultiWriter(os.Stdout, f)
-			log.SetOutput(multiWriter)
+			//multiWriter := io.MultiWriter(os.Stdout, f)
+			//log.SetOutput(multiWriter)
+			log.SetOutput(f)
 
 			log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 		}
