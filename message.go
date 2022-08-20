@@ -17,7 +17,7 @@ const (
 	SipSrvPort = "5061"
 	SrvGbId    = "31011500002000000001"
 	branch     = "z9hG4bK180541459"
-	htmlAbout  = `国标调试工具.<br>https://www.qiniu.com`
+	htmlAbout  = `国标调试工具.<br><a href="https://www.qiniu.com">https://www.qiniu.com</a>`
 )
 
 var (

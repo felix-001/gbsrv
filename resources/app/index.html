@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<link rel="stylesheet" href="static/lib/astiloader/astiloader.css">
+    	<link rel="stylesheet" href="static/lib/astimodaler/astimodaler.css">
+	<link rel="stylesheet" href="static/lib/font-awesome-4.7.0/css/font-awesome.min.css">
 	<style>
 	::-webkit-scrollbar {
     		display: none;
@@ -71,12 +74,14 @@
 	</style>
 </head>
 <body>
+<script src="static/lib/astiloader/astiloader.js"></script>
+<script src="static/lib/astimodaler/astimodaler.js"></script>
 <div class="tab" id="tab">
 	<a id="srv" data-pressed="true" class="tabbtn" onclick="btn1Click(this)" onmouseover="mouseover(this)" onmouseout="mouseout(this)">服务器模式</a> 
 	<a id="cli" class="tabbtn" onclick="btn2Click(this)" onmouseover="mouseover(this)" onmouseout="mouseout(this)">客户端模式</a> 
-	<script src="static/lib/astiloader/astiloader.js"></script>
-    	<script src="static/lib/astimodaler/astimodaler.js"></script>
 	<script>
+		asticode.modaler.init();
+		asticode.modaler.init();
 		function btnCommon(element) {
 			var collection = document.getElementsByClassName("tabbtn");
 			var i;
@@ -128,13 +133,16 @@
 				astilectron.sendMessage(message, function(message){})
 			}
 		}
-
 		function onMessage(message) {
 			console.log("message.name", message.name)
 			switch (message.name) {
 			case "about":
-				//index.about(message.payload);
-				//return {payload: "payload"};
+				console.log("about")
+				let c = document.createElement("div");
+				c.innerHTML = message.payload;
+				asticode.modaler.setContent(c);
+				asticode.modaler.show();
+				break
 			case "msg":
 				console.log("get msg from go")
 				console.log("payload", message.payload)
@@ -181,7 +189,6 @@
 			}
 		}
 		
-		asticode.modaler.init();
         	document.addEventListener('astilectron-ready', function() {
 			astilectron.onMessage(onMessage);
 		});
