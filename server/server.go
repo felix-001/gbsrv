@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -399,8 +398,8 @@ func (s *Server) Run(logEnable bool) {
 		}
 	}()
 
-	multiWriter := io.MultiWriter(os.Stdout, f)
-	log.SetOutput(multiWriter)
+	//multiWriter := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(f)
 
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	if err := s.newConn(); err != nil {
