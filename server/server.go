@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"runtime"
 	"strconv"
 
 	"github.com/jart/gosip/sip"
@@ -312,7 +313,7 @@ func (s *Server) sendCatalogReq(remoteSipAddr *sip.Addr) {
 		fmt.Println(msg.String())
 	}
 	if _, err := s.conn.WriteToUDP([]byte(msg.String()), s.remoteAddr); err != nil {
-		log.Fatal("send catalog err", err)
+		log.Println("send catalog err", err)
 	}
 	s.catalogCallid = msg.CallID
 }
@@ -389,6 +390,13 @@ func (s *Server) Run(logEnable bool) {
 	}
 	defer func() {
 		f.Close()
+		if r1 := recover(); r1 != nil {
+			if _, ok := r1.(runtime.Error); ok {
+				log.Println("runtime err:", r1)
+				return
+			}
+			log.Println("runtime err:", r1)
+		}
 	}()
 
 	multiWriter := io.MultiWriter(os.Stdout, f)
@@ -404,10 +412,10 @@ func (s *Server) Run(logEnable bool) {
 			if err == errInvalidMsg {
 				continue
 			}
-			log.Fatal("fetch msg err:", err, msg.String())
+			log.Println("fetch msg err:", err, msg.String())
 		}
 		if err := s.handleMsg(msg); err != nil {
-			log.Fatal("hand msg err:", err)
+			log.Println("hand msg err:", err)
 		}
 	}
 
