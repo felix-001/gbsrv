@@ -216,6 +216,25 @@ func (s *Server) sendResp(msg *sip.Msg) error {
 	return nil
 }
 
+func (s *Server) sendMessageResp(msg *sip.Msg) error {
+	resp := &sip.Msg{
+		Status:     408,
+		Phrase:     "Request Timeout",
+		From:       msg.From,
+		To:         msg.To,
+		CallID:     msg.CallID,
+		CSeq:       msg.CSeq,
+		CSeqMethod: msg.Method,
+		UserAgent:  "QVS",
+		Expires:    3600,
+		Via:        s.new200Via(msg),
+	}
+	if _, err := s.conn.WriteToUDP([]byte(resp.String()), s.remoteAddr); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Server) handleRegister(msg *sip.Msg) error {
 	if msg.Expires == 0 {
 		s.unRegisterCnt++
@@ -331,12 +350,13 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 		s.keepAliveCnt++
 		s.onDevGbId(msg.From.Uri.User)
 		s.onKeepAlive(s.keepAliveCnt)
-		go s.sendCatalogReq(msg.From)
+		//go s.sendCatalogReq(msg.From)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳告警")
 	}
-	return s.sendResp(msg)
+	//return s.sendResp(msg)
+	return s.sendMessageResp(msg)
 }
 
 func (s *Server) handleMsg(msg *sip.Msg) error {
