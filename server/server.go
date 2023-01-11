@@ -18,9 +18,6 @@ var (
 	errInvalidMsg = errors.New("invalid msg")
 )
 
-type callBack func(count int)
-type catalogCallBack func(count int, name, chid, model, manufacturer string)
-
 type Server struct {
 	port           string
 	conn           *net.UDPConn
@@ -40,14 +37,9 @@ type Server struct {
 	catalogCnt     int
 	registerCnt    int
 	unRegisterCnt  int
-	onKeepAlive    func(count int)
-	onRegister     func(count int)
-	onUnRegister   func(count int)
-	onDevGbId      func(gbId string)
-	onCatalog      catalogCallBack
 }
 
-func New(port, srvGbId, branch string, onKeeyAlive, onRegister, onUnRegister callBack, onCatalog catalogCallBack, onDevGbId func(gbId string)) *Server {
+func New(port, srvGbId, branch string) *Server {
 	return &Server{
 		port:           port,
 		showRemoteAddr: true,
@@ -60,11 +52,6 @@ func New(port, srvGbId, branch string, onKeeyAlive, onRegister, onUnRegister cal
 		isOnline:       false,
 		isCatalogResp:  false,
 		host:           getOutboundIP().String(),
-		onKeepAlive:    onKeeyAlive,
-		onCatalog:      onCatalog,
-		onRegister:     onRegister,
-		onUnRegister:   onUnRegister,
-		onDevGbId:      onDevGbId,
 	}
 }
 
@@ -238,13 +225,9 @@ func (s *Server) sendMessageResp(msg *sip.Msg) error {
 func (s *Server) handleRegister(msg *sip.Msg) error {
 	if msg.Expires == 0 {
 		s.unRegisterCnt++
-		s.onDevGbId(msg.From.Uri.User)
-		s.onUnRegister(s.unRegisterCnt)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注销信令")
 	} else {
 		s.registerCnt++
-		s.onDevGbId(msg.From.Uri.User)
-		s.onRegister(s.registerCnt)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注册信令")
 		if s.showUA {
 			log.Println("摄像机User-Agent:", msg.UserAgent)
@@ -296,7 +279,6 @@ func (s *Server) handleCatalog(xml *XmlMsg) {
 	log.Println("Chid:", item.ChId)
 	log.Println("Model:", item.Model)
 	log.Println("Manufacturer:", item.Manufacturer)
-	s.onCatalog(s.catalogCnt, item.Name, item.ChId, item.Model, item.Manufacturer)
 	s.isCatalogResp = true
 }
 
@@ -348,8 +330,6 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 		}
 		s.isOnline = true
 		s.keepAliveCnt++
-		s.onDevGbId(msg.From.Uri.User)
-		s.onKeepAlive(s.keepAliveCnt)
 		//go s.sendCatalogReq(msg.From)
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
 	case "Alarm":
