@@ -15,7 +15,35 @@ import (
 )
 
 var (
-	errInvalidMsg = errors.New("invalid msg")
+	errInvalidMsg   = errors.New("invalid msg")
+	registerResp401 = "SIP/2.0 401 Unauthorized\r\n" +
+		"Via: SIP/2.0/UDP 127.0.0.1:56536;rport=56536;received=127.0.0.1;branch=z9hG4bK2024071795\r\n" +
+		"From: <sip:31011500991180021627@3101010099>;tag=1205108216\r\n" +
+		"To: <sip:31011500991180021627@3101010099>\r\n" +
+		"CSeq: 1 REGISTER\r\n" +
+		"Call-ID: 707078007@3101010099\r\n" +
+		"Contact: <sip:31011500991180021627@127.0.0.1:56536>\r\n" +
+		"User-Agent: QVS/2.0.0(Lion)\r\n" +
+		"Content-Length: 0\r\n" +
+		"WWW-Authenticate: Digest realm=\"3402000000\",qop=\"auth\",nonce=\"2717a8443b332b59955bfec36d4438da\"\r\n\r\n"
+	registerResp200 = "SIP/2.0 200 OK\r\n" +
+		"Via: SIP/2.0/UDP 127.0.0.1:56536;rport=38976;received=127.0.0.1;branch=z9hG4bK1216505445\r\n" +
+		"From: <sip:31011500991180021627@3101010099>;tag=1205108216\r\n" +
+		"To: <sip:31011500991180021627@3101010099>\r\n" +
+		"CSeq: 2 REGISTER\r\n" +
+		"Call-ID: 2000949065@3101010099\r\n" +
+		"Contact: <sip:31011500991180021627@127.0.0.1:56536>\r\n" +
+		"User-Agent: QVS/2.0.0(Lion)\r\n" +
+		"Expires: 3600\r\n" +
+		"Content-Length: 0\r\n\r\n"
+	msgResp200 = "SIP/2.0 200 OK\r\n" +
+		"Via: SIP/2.0/UDP 127.0.0.1:38976;rport=56536;received=127.0.0.1;branch=z9hG4bK541497536\r\n" +
+		"From: <sip:31011500991180021627@3101010099>;tag=1601296758\r\n" +
+		"To: <sip:31011500002000000001@23.248.173.9:5061>\r\n" +
+		"CSeq: 1766 MESSAGE\r\n" +
+		"Call-ID: 72112810@3101010099\r\n" +
+		"User-Agent: QVS/2.0.0(Lion)\r\n" +
+		"Content-Length: 0\r\n\r\n"
 )
 
 type Server struct {
@@ -102,10 +130,10 @@ func (s *Server) newFrom() *sip.Addr {
 }
 
 func (s *Server) newVia() *sip.Via {
-	port, _ := strconv.Atoi(s.port)
+	//port, _ := strconv.Atoi(s.port)
 	via := &sip.Via{
-		Host: s.host,
-		Port: uint16(port),
+		Host: "127.0.0.1", //s.host,
+		Port: 1123,        //uint16(port),
 		Param: &sip.Param{
 			Name:  "branch",
 			Value: s.branch,
@@ -166,17 +194,18 @@ func (s *Server) new200Via(msg *sip.Msg) *sip.Via {
 		}
 	}
 	via := &sip.Via{
-		Host: msg.Via.Host,
-		Port: msg.Via.Port,
+		Host: "192.168.1.7", //msg.Via.Host,
+		Port: 48301,         //msg.Via.Port,
 		Param: &sip.Param{
 			Name:  "branch",
 			Value: branch,
 			Next: &sip.Param{
-				Name:  "received",
-				Value: msg.Via.Host,
+				Name: "received",
+				//Value: msg.Via.Host,
+				Value: "10.20.21.35",
 				Next: &sip.Param{
 					Name:  "rport",
-					Value: strconv.Itoa(int(msg.Via.Port)),
+					Value: "50762", //Value: strconv.Itoa(int(msg.Via.Port)),
 				},
 			},
 		},
@@ -204,18 +233,28 @@ func (s *Server) sendResp(msg *sip.Msg) error {
 }
 
 func (s *Server) sendMessageResp(msg *sip.Msg) error {
-	resp := &sip.Msg{
-		Status:     408,
-		Phrase:     "Request Timeout",
-		From:       msg.From,
-		To:         msg.To,
-		CallID:     msg.CallID,
-		CSeq:       msg.CSeq,
-		CSeqMethod: msg.Method,
-		UserAgent:  "QVS",
-		Expires:    3600,
-		Via:        s.new200Via(msg),
+	/*
+		resp := &sip.Msg{
+			Status:     408,
+			Phrase:     "Request Timeout",
+			From:       msg.From,
+			To:         msg.To,
+			CallID:     msg.CallID,
+			CSeq:       msg.CSeq,
+			CSeqMethod: msg.Method,
+			UserAgent:  "QVS",
+			Expires:    3600,
+			Via:        s.new200Via(msg),
+		}
+	*/
+	resp, err := sip.ParseMsg([]byte(msgResp200))
+	if err != nil {
+		log.Println(err)
+		return err
 	}
+	resp.CallID = msg.CallID
+	resp.CSeq = msg.CSeq
+	resp.Via = s.new200Via(msg)
 	if _, err := s.conn.WriteToUDP([]byte(resp.String()), s.remoteAddr); err != nil {
 		return err
 	}
@@ -223,19 +262,36 @@ func (s *Server) sendMessageResp(msg *sip.Msg) error {
 }
 
 func (s *Server) handleRegister(msg *sip.Msg) error {
+	resp := registerResp401
 	if msg.Expires == 0 {
 		s.unRegisterCnt++
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注销信令")
+		resp = registerResp200
 	} else {
 		s.registerCnt++
-		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注册信令")
 		if s.showUA {
 			log.Println("摄像机User-Agent:", msg.UserAgent)
 			s.showUA = false
 		}
 		s.isRegistered = true
+		if msg.Authorization != "" {
+			log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注册信令,带鉴权")
+			resp = registerResp200
+		}
+		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到注册信令,不带鉴权")
 	}
-	return s.sendResp(msg)
+	respMsg, err := sip.ParseMsg([]byte(resp))
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	respMsg.CallID = msg.CallID
+	respMsg.CSeq = msg.CSeq
+	respMsg.Via = s.new200Via(msg)
+	if _, err := s.conn.WriteToUDP([]byte(respMsg.String()), s.remoteAddr); err != nil {
+		return err
+	}
+	return nil
 }
 
 type Item struct {
@@ -311,8 +367,8 @@ func (s *Server) sendCatalogReq(remoteSipAddr *sip.Addr) {
 }
 
 func (s *Server) handleSipMessage(msg *sip.Msg) error {
-	if msg.Payload.ContentType() != "Application/MANSCDP+xml" {
-		log.Println("收到消息格式为非xml,暂不处理")
+	if msg.Payload.ContentType() != "application/MANSCDP+xml" {
+		log.Println("收到消息格式为非xml,暂不处理", msg.String())
 		return nil
 	}
 	xmlMsg, err := s.parseXml(string(msg.Payload.Data()))
@@ -330,12 +386,14 @@ func (s *Server) handleSipMessage(msg *sip.Msg) error {
 		}
 		s.isOnline = true
 		s.keepAliveCnt++
-		//go s.sendCatalogReq(msg.From)
-		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令")
+		if s.keepAliveCnt%5 == 0 {
+			go s.sendCatalogReq(msg.From)
+			log.Println("[S->C] 摄像机国标ID:", msg.From.Uri.User, "发送catalog请求")
+		}
+		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳信令", s.keepAliveCnt, "次")
 	case "Alarm":
 		log.Println("[C->S] 摄像机国标ID:", msg.From.Uri.User, "收到心跳告警")
 	}
-	//return s.sendResp(msg)
 	return s.sendMessageResp(msg)
 }
 

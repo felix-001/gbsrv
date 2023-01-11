@@ -12,7 +12,7 @@ const (
 )
 
 func main() {
-	log.SetFlags(log.Ldate | log.Ltime)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	srv := server.New(SipSrvPort, SrvGbId, branch)
 	srv.Run()
 }
